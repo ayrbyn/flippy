@@ -12,6 +12,7 @@ export type UserWord = {
   word_form_in_sentence: string;
   stage: string;
   created_at: string;
+  saved_to_album_at: string | null;
 };
 
 export type GenerateResult =
@@ -31,12 +32,25 @@ export async function fetchWords(courseId: string): Promise<UserWord[]> {
     .from('user_words')
     .select('*')
     .eq('course_id', courseId)
+    .not('saved_to_album_at', 'is', null)
     .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(error.message);
   }
   return (data ?? []) as UserWord[];
+}
+
+export async function saveWordToAlbum(wordId: string): Promise<UserWord> {
+  const { data, error } = await supabase
+    .from('user_words')
+    .update({ saved_to_album_at: new Date().toISOString() })
+    .eq('id', wordId)
+    .select('*')
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as UserWord;
 }
 
 export async function generateFlashcard(

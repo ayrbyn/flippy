@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { Fonts, Palette } from '../../constants/theme';
 
 type Mode = 'login' | 'register';
 
@@ -133,30 +134,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.paper,
   },
   title: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#111111',
+    color: Palette.ink,
+    fontFamily: Fonts.handwritten,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#555555',
+    color: Palette.muted,
     textAlign: 'center',
     marginBottom: 32,
     marginTop: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Palette.ink,
+    borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111111',
-    backgroundColor: '#FFFFFF',
+    color: Palette.ink,
+    backgroundColor: Palette.paperAlt,
     marginBottom: 12,
   },
   message: {
@@ -164,14 +166,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   error: {
-    color: '#B91C1C',
+    color: Palette.error,
   },
   success: {
-    color: '#15803D',
+    color: Palette.success,
   },
   button: {
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
+    backgroundColor: Palette.yellow,
+    borderWidth: 1.5,
+    borderColor: Palette.ink,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
@@ -180,12 +184,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: Palette.ink,
     fontSize: 16,
     fontWeight: '600',
   },
   switchText: {
-    color: '#2563EB',
+    color: Palette.ink,
     textAlign: 'center',
     marginTop: 20,
     fontSize: 15,

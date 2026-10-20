@@ -13,6 +13,7 @@ import {
   LEVELS,
   TARGET_LANGUAGES,
 } from '../lib/languages';
+import { Fonts, Palette } from '../constants/theme';
 
 const GOALS = [3, 5, 10];
 
@@ -148,28 +149,29 @@ export default function CreateCourseForm() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.paper,
   },
   content: {
     padding: 24,
-    paddingTop: 72,
+    paddingTop: 62,
     paddingBottom: 48,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#111111',
+    color: Palette.ink,
+    fontFamily: Fonts.handwritten,
   },
   subtitle: {
     fontSize: 15,
-    color: '#555555',
+    color: Palette.muted,
     marginTop: 6,
     marginBottom: 24,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111111',
+    color: Palette.ink,
     marginTop: 12,
     marginBottom: 8,
   },
@@ -180,32 +182,34 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 20,
+    borderColor: Palette.ink,
+    borderRadius: 16,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.paperAlt,
   },
   chipSelected: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: Palette.lavender,
+    borderColor: Palette.ink,
   },
   chipText: {
     fontSize: 15,
-    color: '#111111',
+    color: Palette.ink,
   },
   chipTextSelected: {
-    color: '#FFFFFF',
+    color: Palette.ink,
     fontWeight: '600',
   },
   error: {
-    color: '#B91C1C',
+    color: Palette.error,
     fontSize: 14,
     marginTop: 16,
   },
   button: {
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
+    backgroundColor: Palette.yellow,
+    borderWidth: 1.5,
+    borderColor: Palette.ink,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 28,
@@ -214,7 +218,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: Palette.ink,
     fontSize: 16,
     fontWeight: '600',
   },
