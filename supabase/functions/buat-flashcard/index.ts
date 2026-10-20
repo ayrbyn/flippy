@@ -302,33 +302,8 @@ Deno.serve(async (req: Request) => {
     let shared = cached;
     const fromCache = !!cached;
 
-    // 3. Belum ada: periksa batas harian lalu minta AI
+    // 3. Belum ada di cache: minta AI membuat kartu
     if (!shared) {
-      const today = new Date().toISOString().slice(0, 10);
-      const dailyLimit = Number(Deno.env.get('DAILY_LIMIT') ?? '10');
-
-      const { data: usage } = await admin
-        .from('ai_usage')
-        .select('generation_count')
-        .eq('user_id', user.id)
-        .eq('usage_date', today)
-        .maybeSingle();
-
-      const used = usage?.generation_count ?? 0;
-      if (used >= dailyLimit) {
-        return json(
-          { error: 'Batas pembuatan flashcard hari ini sudah tercapai.', code: 'daily_limit' },
-          429
-        );
-      }
-
-      await admin
-        .from('ai_usage')
-        .upsert(
-          { user_id: user.id, usage_date: today, generation_count: used + 1 },
-          { onConflict: 'user_id,usage_date' }
-        );
-
       let card: Card;
       try {
         card = await generateCard(
@@ -338,14 +313,6 @@ Deno.serve(async (req: Request) => {
           course.level
         );
       } catch (e) {
-        // Gagal: kembalikan jatah harian pengguna
-        await admin
-          .from('ai_usage')
-          .upsert(
-            { user_id: user.id, usage_date: today, generation_count: used },
-            { onConflict: 'user_id,usage_date' }
-          );
-
         if (e instanceof InvalidWordError) {
           return json({ error: 'Kata tidak dikenali di bahasa ini.', code: 'invalid_word' }, 422);
         }

@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import CreateCourseForm from '../../components/create-course-form';
 import PracticeSession from '../../components/practice-session';
+import PracticeScopePicker from '../../components/practice-scope-picker';
 import ReminderCard from '../../components/reminder-card';
 import { useAuth } from '../../lib/auth';
 import { useCourses } from '../../lib/courses';
 import { getLanguageName, getLevelName } from '../../lib/languages';
-import { countDueWords, countWordsAddedToday } from '../../lib/practice';
+import { countPracticePool, countWordsAddedToday, PracticePoolCounts, PracticeScope } from '../../lib/practice';
 import { useProfile } from '../../lib/profile';
 import { supabase } from '../../lib/supabase';
 import { Fonts, Palette } from '../../constants/theme';
@@ -26,7 +27,9 @@ export default function HomeScreen() {
   const { profile, streak, refresh: refreshProfile } = useProfile();
 
   const [practicing, setPracticing] = useState(false);
-  const [dueCount, setDueCount] = useState<number | null>(null);
+  const [showScopePicker, setShowScopePicker] = useState(false);
+  const [practiceScope, setPracticeScope] = useState<PracticeScope>('all_words');
+  const [practiceCounts, setPracticeCounts] = useState<PracticePoolCounts | null>(null);
   const [todayCount, setTodayCount] = useState(0);
 
   const courseId = activeCourse?.id ?? null;
@@ -34,14 +37,14 @@ export default function HomeScreen() {
   const loadStats = useCallback(async () => {
     if (!courseId) return;
     try {
-      const [due, today] = await Promise.all([
-        countDueWords(courseId),
+      const [pool, today] = await Promise.all([
+        countPracticePool(courseId),
         countWordsAddedToday(courseId),
       ]);
-      setDueCount(due);
+      setPracticeCounts(pool);
       setTodayCount(today);
     } catch (_e) {
-      setDueCount(null);
+      setPracticeCounts(null);
     }
   }, [courseId]);
 
@@ -79,6 +82,7 @@ export default function HomeScreen() {
   if (practicing) {
     return (
       <PracticeSession
+        scope={practiceScope}
         onExit={() => {
           setPracticing(false);
           loadStats();
@@ -90,9 +94,10 @@ export default function HomeScreen() {
 
   const goal = activeCourse.daily_word_goal;
   const percent = Math.min(100, Math.round((todayCount / goal) * 100));
-  const canPractice = dueCount !== null && dueCount > 0;
+  const canPractice = practiceCounts !== null && practiceCounts.allWords > 0;
 
   return (
+    <View style={styles.root}>
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <View style={styles.headingRow}>
         <View>
@@ -142,15 +147,15 @@ export default function HomeScreen() {
       <View style={[styles.card, styles.practiceCard]}>
         <Text style={styles.cardLabel}>Latihan harian</Text>
         <Text style={styles.cardText}>
-          {dueCount === null
+          {practiceCounts === null
             ? 'Memuat...'
-            : dueCount > 0
-              ? dueCount + ' kata siap diulang'
-              : 'Belum ada kata yang perlu diulang'}
+            : practiceCounts.allWords > 0
+              ? `${practiceCounts.newWords} kata baru · ${practiceCounts.allWords} total kartu`
+              : 'Tambahkan flashcard untuk mulai latihan'}
         </Text>
         <Pressable
           style={[styles.button, styles.practiceButton, !canPractice && styles.buttonDisabled]}
-          onPress={() => setPracticing(true)}
+          onPress={() => setShowScopePicker(true)}
           disabled={!canPractice}
         >
           <Text style={styles.buttonText}>Mulai latihan</Text>
@@ -166,10 +171,22 @@ export default function HomeScreen() {
         <Text style={styles.buttonText}>Keluar</Text>
       </Pressable>
     </ScrollView>
+    <PracticeScopePicker
+      visible={showScopePicker}
+      counts={practiceCounts ?? { newWords: 0, allWords: 0 }}
+      onCancel={() => setShowScopePicker(false)}
+      onStart={(scope) => {
+        setPracticeScope(scope);
+        setShowScopePicker(false);
+        setPracticing(true);
+      }}
+    />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Palette.paper },
   scroll: {
     flex: 1,
     backgroundColor: Palette.paper,

@@ -14,23 +14,32 @@ import { useAuth } from '../lib/auth';
 import { useCourses } from '../lib/courses';
 import {
   buildBlank,
-  fetchDueWords,
+  fetchPracticeWords,
   normalizeAnswer,
+  PracticeMode,
+  PracticeScope,
   PracticeWord,
   saveAnswer,
   XP_PER_CORRECT,
 } from '../lib/practice';
 import { useProfile } from '../lib/profile';
 import { Fonts, Palette } from '../constants/theme';
+import { getLanguageName } from '../lib/languages';
 
 type Phase = 'loading' | 'error' | 'empty' | 'question' | 'feedback' | 'done';
+type PracticeQuestion = PracticeWord & { method: PracticeMode };
 
-export default function PracticeSession({ onExit }: { onExit: () => void }) {
+function randomMethod(): PracticeMode {
+  const methods: PracticeMode[] = ['fill_blank', 'recall_word'];
+  return methods[Math.floor(Math.random() * methods.length)];
+}
+
+export default function PracticeSession({ onExit, scope }: { onExit: () => void; scope: PracticeScope }) {
   const { session } = useAuth();
   const { activeCourse } = useCourses();
   const { recordPractice } = useProfile();
 
-  const [queue, setQueue] = useState<PracticeWord[]>([]);
+  const [queue, setQueue] = useState<PracticeQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('loading');
   const [answer, setAnswer] = useState('');
@@ -49,9 +58,9 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
     async function load() {
       if (!courseId) return;
       try {
-        const list = await fetchDueWords(courseId);
+        const list = await fetchPracticeWords(courseId, scope);
         if (cancelled) return;
-        setQueue(list);
+        setQueue(list.map((word) => ({ ...word, method: randomMethod() })));
         setPhase(list.length === 0 ? 'empty' : 'question');
       } catch (e) {
         if (cancelled) return;
@@ -64,7 +73,7 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [courseId]);
+  }, [courseId, scope]);
 
   const current = queue[index];
 
@@ -74,18 +83,18 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
     setSaving(true);
     setMessage(null);
 
-    const isCorrect =
-      normalizeAnswer(answer) === normalizeAnswer(current.word_form_in_sentence);
+    const expectedAnswer = mode === 'fill_blank' ? current.word_form_in_sentence : current.word;
+    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(expectedAnswer);
     const xp = isCorrect ? XP_PER_CORRECT : 0;
 
     try {
-      const updated = await saveAnswer(session.user.id, current, isCorrect, xp);
+      const updated = await saveAnswer(session.user.id, current, isCorrect, xp, mode);
       await recordPractice(xp);
 
       // Jawaban salah: kata muncul sekali lagi di akhir sesi
       if (!isCorrect && !requeued.current.has(current.id)) {
         requeued.current.add(current.id);
-        setQueue((prev) => [...prev, updated]);
+        setQueue((prev) => [...prev, { ...updated, method: randomMethod() }]);
       }
 
       setStats((prev) => ({
@@ -166,9 +175,11 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
     return null;
   }
 
+  const mode = current.method;
   const parts = buildBlank(current.example_sentence, current.word_form_in_sentence);
   const inFeedback = phase === 'feedback';
-  const letters = Array.from(current.word_form_in_sentence);
+  const answerToShow = mode === 'fill_blank' ? current.word_form_in_sentence : current.word;
+  const answerLetters = Array.from(answerToShow);
 
   return (
     <KeyboardAvoidingView
@@ -188,24 +199,28 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
           </Text>
         </View>
 
-        <Text style={styles.instruction}>Isi bagian yang kosong</Text>
-
-        <Text style={styles.sentence}>
-          {parts.before}
-          <Text
-            style={[
-              styles.blank,
-              inFeedback && (lastCorrect ? styles.blankCorrect : styles.blankWrong),
-            ]}
-          >
-            {inFeedback ? current.word_form_in_sentence : '_____'}
-          </Text>
-          {parts.after}
+        <Text style={styles.instruction}>
+          {mode === 'fill_blank' ? 'Isi bagian yang kosong' : 'Ingat kata dari artinya'}
         </Text>
 
-        {current.example_translation ? (
-          <Text style={styles.translation}>{current.example_translation}</Text>
-        ) : null}
+        {mode === 'fill_blank' ? (
+          <>
+            <Text style={styles.sentence}>
+              {parts.before}
+              <Text style={[styles.blank, inFeedback && (lastCorrect ? styles.blankCorrect : styles.blankWrong)]}>
+                {inFeedback ? current.word_form_in_sentence : '_____'}
+              </Text>
+              {parts.after}
+            </Text>
+            {current.example_translation ? <Text style={styles.translation}>{current.example_translation}</Text> : null}
+          </>
+        ) : (
+          <View style={styles.meaningCard}>
+            <Text style={styles.promptLabel}>ARTI KATA</Text>
+            <Text style={styles.meaningText}>{current.definition}</Text>
+            <Text style={styles.promptHint}>Tulis kosakata yang cocok dalam bahasa {activeCourse ? getLanguageName(activeCourse.target_language) : 'yang dipelajari'}.</Text>
+          </View>
+        )}
 
         {!inFeedback ? (
           <View>
@@ -216,20 +231,19 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
             </Pressable>
             {hint ? (
               <Text style={styles.hintText}>
-                {current.definition}. Huruf pertama: {letters[0]}, jumlah huruf:{' '}
-                {letters.length}.
+                {mode === 'fill_blank' ? `${current.definition}. ` : ''}Huruf pertama: {answerLetters[0]}, jumlah huruf: {answerLetters.length}.
               </Text>
             ) : null}
 
             <TextInput
               style={styles.input}
-              placeholder="Ketik jawaban"
-              placeholderTextColor="#888888"
+              placeholder={mode === 'fill_blank' ? 'Ketik kata yang hilang' : 'Tulis kata yang cocok'}
+              placeholderTextColor={Palette.muted}
               autoCapitalize="none"
               autoCorrect={false}
               value={answer}
               onChangeText={setAnswer}
-              onSubmitEditing={handleCheck}
+              onSubmitEditing={() => handleCheck()}
               editable={!saving}
               returnKeyType="done"
             />
@@ -238,7 +252,7 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
 
             <Pressable
               style={[styles.button, (saving || !answer.trim()) && styles.buttonDisabled]}
-              onPress={handleCheck}
+              onPress={() => handleCheck()}
               disabled={saving || !answer.trim()}
             >
               {saving ? (
@@ -256,7 +270,7 @@ export default function PracticeSession({ onExit }: { onExit: () => void }) {
               </Text>
               {!lastCorrect ? (
                 <Text style={styles.feedbackText}>
-                  Jawaban yang benar: {current.word_form_in_sentence}
+                  Jawaban yang benar: {answerToShow}
                 </Text>
               ) : null}
               <Text style={styles.feedbackText}>
@@ -299,7 +313,7 @@ const styles = StyleSheet.create({
   },
   exit: {
     fontSize: 16,
-    color: '#B91C1C',
+    color: Palette.error,
   },
   progress: {
     fontSize: 16,
@@ -425,4 +439,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 24,
   },
+  meaningCard: { minHeight: 210, justifyContent: 'center', alignItems: 'center', padding: 24, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 20, backgroundColor: Palette.lavender, marginBottom: 14, transform: [{ rotate: '-0.4deg' }] },
+  promptLabel: { color: Palette.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.8, marginBottom: 13 },
+  meaningText: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 26, fontWeight: '700', textAlign: 'center', lineHeight: 34 },
+  promptHint: { color: Palette.muted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 15 },
 });

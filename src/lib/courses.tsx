@@ -31,6 +31,7 @@ type CourseState = {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  setActiveCourse: (courseId: string) => void;
   // Mengembalikan pesan error, atau null kalau berhasil
   createCourse: (input: NewCourseInput) => Promise<string | null>;
 };
@@ -100,12 +101,19 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     [courses, activeCourseId]
   );
 
+  const setActiveCourse = useCallback((courseId: string) => {
+    if (courses.some((course) => course.id === courseId)) {
+      setActiveCourseId(courseId);
+    }
+  }, [courses]);
+
   const value: CourseState = {
     courses,
     activeCourse,
     loading,
     error,
     refresh,
+    setActiveCourse,
     createCourse,
   };
 

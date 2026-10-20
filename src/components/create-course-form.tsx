@@ -38,7 +38,13 @@ function Chip({
   );
 }
 
-export default function CreateCourseForm() {
+export default function CreateCourseForm({
+  additional = false,
+  onCreated,
+}: {
+  additional?: boolean;
+  onCreated?: () => void;
+}) {
   const { createCourse } = useCourses();
   const [target, setTarget] = useState('en');
   const [explanation, setExplanation] = useState('id');
@@ -66,6 +72,9 @@ export default function CreateCourseForm() {
 
     if (errorMessage) {
       setMessage(errorMessage);
+    } else {
+      if (additional) setMessage('Kursus baru berhasil ditambahkan.');
+      onCreated?.();
     }
   }
 
@@ -75,10 +84,11 @@ export default function CreateCourseForm() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Buat kursus pertama</Text>
+      <Text style={styles.title}>{additional ? 'Tambah bahasa baru' : 'Buat kursus pertama'}</Text>
       <Text style={styles.subtitle}>
-        Pilih bahasa yang ingin Anda pelajari. Anda bisa menambah kursus lain
-        nanti.
+        {additional
+          ? 'Pilih bahasa dan target belajar untuk jurnal kosakata baru.'
+          : 'Pilih bahasa yang ingin Anda pelajari. Anda bisa menambah kursus lain nanti.'}
       </Text>
 
       <Text style={styles.label}>Saya ingin belajar</Text>
@@ -139,7 +149,7 @@ export default function CreateCourseForm() {
         {saving ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text style={styles.buttonText}>Mulai belajar</Text>
+          <Text style={styles.buttonText}>{additional ? 'Tambah kursus' : 'Mulai belajar'}</Text>
         )}
       </Pressable>
     </ScrollView>

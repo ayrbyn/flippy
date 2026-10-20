@@ -13,6 +13,7 @@ export type UserWord = {
   stage: string;
   created_at: string;
   saved_to_album_at: string | null;
+  practice_count?: number;
 };
 
 export type GenerateResult =
@@ -20,7 +21,6 @@ export type GenerateResult =
   | { ok: false; code: string; message: string };
 
 const ERROR_MESSAGES: Record<string, string> = {
-  daily_limit: 'Batas pembuatan flashcard hari ini sudah tercapai. Coba lagi besok.',
   ai_busy: 'Layanan AI sedang sibuk. Coba lagi beberapa saat lagi.',
   ai_failed: 'AI gagal membuat flashcard. Coba lagi.',
   invalid_word: 'Kata tidak dikenali di bahasa ini. Periksa ejaannya.',
