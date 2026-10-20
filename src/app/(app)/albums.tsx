@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -65,7 +65,7 @@ function WordGrid({ words, onSelect }: { words: UserWord[]; onSelect: (word: Use
 
 function FullFlashcard({ word, onClose }: { word: UserWord; onClose: () => void }) {
   const [flipped, setFlipped] = useState(false);
-  const rotation = useRef(new Animated.Value(0)).current;
+  const [rotation] = useState(() => new Animated.Value(0));
 
   const flip = () => {
     const next = !flipped;
@@ -105,6 +105,8 @@ function FullFlashcard({ word, onClose }: { word: UserWord; onClose: () => void 
                 <View style={styles.fullRule} />
                 <Text style={styles.fullExample}>{word.example_sentence}</Text>
                 {word.example_translation ? <Text style={styles.fullTranslation}>{word.example_translation}</Text> : null}
+                {word.example_sentence_2 ? <Text style={styles.fullExampleSecondary}>{word.example_sentence_2}</Text> : null}
+                {word.example_translation_2 ? <Text style={styles.fullTranslation}>{word.example_translation_2}</Text> : null}
                 <Text style={styles.flipHint}>Ketuk kartu untuk kembali</Text>
               </Animated.View>
             </View>
@@ -280,5 +282,6 @@ const styles = StyleSheet.create({
   flipHint: { color: Palette.muted, fontSize: 13, textAlign: 'center', marginTop: 18 },
   fullDefinition: { color: Palette.ink, fontSize: 22, lineHeight: 30, fontWeight: '600', textAlign: 'center' },
   fullExample: { color: Palette.ink, fontSize: 16, fontStyle: 'italic', lineHeight: 24, textAlign: 'center' },
+  fullExampleSecondary: { color: Palette.ink, fontSize: 14, fontStyle: 'italic', lineHeight: 21, textAlign: 'center', marginTop: 12 },
   fullTranslation: { color: Palette.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 10 },
 });

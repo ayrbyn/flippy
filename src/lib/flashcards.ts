@@ -14,6 +14,11 @@ export type UserWord = {
   created_at: string;
   saved_to_album_at: string | null;
   practice_count?: number;
+  accepted_answers?: string[];
+  accepted_blank_answers?: string[];
+  example_sentence_2?: string | null;
+  example_translation_2?: string | null;
+  word_form_in_sentence_2?: string | null;
 };
 
 export type GenerateResult =
@@ -28,17 +33,26 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 export async function fetchWords(courseId: string): Promise<UserWord[]> {
-  const { data, error } = await supabase
-    .from('user_words')
-    .select('*')
-    .eq('course_id', courseId)
-    .not('saved_to_album_at', 'is', null)
-    .order('created_at', { ascending: false });
+  const pageSize = 500;
+  const words: UserWord[] = [];
 
-  if (error) {
-    throw new Error(error.message);
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from('user_words')
+      .select('*')
+      .eq('course_id', courseId)
+      .not('saved_to_album_at', 'is', null)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(error.message);
+    const page = (data ?? []) as UserWord[];
+    words.push(...page);
+    if (page.length < pageSize) break;
   }
-  return (data ?? []) as UserWord[];
+
+  return words;
 }
 
 export async function saveWordToAlbum(wordId: string): Promise<UserWord> {
@@ -70,7 +84,7 @@ export async function generateFlashcard(
           ERROR_MESSAGES[code] ??
           (typeof body?.error === 'string' ? body.error : 'Terjadi kesalahan.');
         return { ok: false, code, message };
-      } catch (_e) {
+      } catch {
         // isi error tidak bisa dibaca, lanjut ke pesan umum
       }
     }

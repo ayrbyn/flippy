@@ -52,7 +52,7 @@ function getNotifications(): NotificationsModule | null {
       }),
     });
     cached = mod;
-  } catch (_e) {
+  } catch {
     cached = null;
   }
   return cached;
@@ -72,7 +72,7 @@ export async function loadSettings(): Promise<ReminderSettings> {
       hour: typeof parsed.hour === 'number' ? parsed.hour : DEFAULT_SETTINGS.hour,
       minute: typeof parsed.minute === 'number' ? parsed.minute : DEFAULT_SETTINGS.minute,
     };
-  } catch (_e) {
+  } catch {
     return DEFAULT_SETTINGS;
   }
 }
@@ -80,7 +80,7 @@ export async function loadSettings(): Promise<ReminderSettings> {
 export async function saveSettings(settings: ReminderSettings): Promise<void> {
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch (_e) {
+  } catch {
     // abaikan: pengaturan gagal disimpan tidak boleh merusak aplikasi
   }
 }
@@ -118,7 +118,7 @@ export async function scheduleReminder(
 
     try {
       await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_ID);
-    } catch (_e) {
+    } catch {
       // belum ada jadwal sebelumnya, tidak masalah
     }
 
@@ -138,7 +138,7 @@ export async function scheduleReminder(
 
     await saveSettings({ enabled: true, hour, minute });
     return 'ok';
-  } catch (_e) {
+  } catch {
     return 'error';
   }
 }
@@ -148,7 +148,7 @@ export async function cancelReminder(hour: number, minute: number): Promise<void
   if (Notifications) {
     try {
       await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_ID);
-    } catch (_e) {
+    } catch {
       // abaikan
     }
   }
@@ -178,7 +178,7 @@ export async function sendTestNotification(): Promise<ScheduleResult> {
       },
     });
     return 'ok';
-  } catch (_e) {
+  } catch {
     return 'error';
   }
 }

@@ -1,56 +1,58 @@
-# Welcome to your Expo app 👋
+# Flippy
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Flippy is a mobile-first vocabulary journal built with Expo and React Native. Learners create AI-assisted flashcards with two example contexts, keep them in monthly albums, and practice words through active recall and sentence completion.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Expo SDK 57, React Native 0.86, TypeScript, Expo Router
+- Supabase Auth and Postgres for accounts, courses, flashcards, and practice history
+- Supabase Edge Function `buat-flashcard` for OpenRouter-backed card generation and shared card caching
+- Caveat for handwritten headings; system sans-serif for reading and controls
 
-   ```bash
-   npm install
+## Run locally
+
+1. Install the locked dependencies with `npm ci`.
+2. Create `.env.local` with the Supabase project URL and anon key:
+
+   ```dotenv
+   EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=<public-anon-key>
    ```
 
-2. Start the app
+3. Start Expo with `npx expo start`.
 
-   ```bash
-   npx expo start
-   ```
+Never put a Supabase service-role key or OpenRouter key in the app's `EXPO_PUBLIC_*` variables. They belong in Supabase Edge Function secrets.
 
-In the output, you'll find options to open the app in a
+## Backend setup
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Apply the SQL files in `supabase/migrations` to the linked Supabase project with the Supabase CLI.
+- Deploy `supabase/functions/buat-flashcard`.
+- Configure `OPENROUTER_API_KEY` as an Edge Function secret. `OPENROUTER_MODEL` is optional; the default is a free model. The app has no daily creation cap by design. OpenRouter can still enforce its provider quotas; set account-level spend controls in OpenRouter if needed.
+- Generation uses a shared cache and an expiring per-word lock to avoid duplicate OpenRouter calls when concurrent requests ask for the same uncached word.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Main flows
 
-## Get a fresh project
+- **Home:** active course, daily learning target, XP/streak, reminders, and practice entry point.
+- **Kata:** add a word, preview and flip its flashcard, then save it to the monthly album.
+- **Album:** browse saved cards by creation month and day; open a card to view it full size.
+- **User:** account progress, learned languages/courses, course switching, and logout.
+- **Practice:** choose unpracticed words or a random sample of up to ten cards. The exercise method is randomized per question. Ten unassisted correct answers mark a word as memorized.
 
-When you're ready, run:
+## Project structure
 
-```bash
-npm run reset-project
+```text
+src/app/                 Expo Router screens
+src/components/          Shared UI components
+src/constants/theme.ts   Palette, typography, and journal style tokens
+src/lib/                 Supabase clients and application services
+supabase/functions/      Edge Functions
+supabase/migrations/     Database schema and migrations
+assets/images/           App, tab, and splash artwork
+assets/fonts/            Bundled Caveat font
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Useful commands
 
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `npx expo start` — start Metro and open the app
+- `npx tsc --noEmit` — typecheck application code
+- `npx expo lint` — lint when an ESLint configuration is present

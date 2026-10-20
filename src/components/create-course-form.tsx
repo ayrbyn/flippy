@@ -147,7 +147,7 @@ export default function CreateCourseForm({
         disabled={saving}
       >
         {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={Palette.white} />
         ) : (
           <Text style={styles.buttonText}>{additional ? 'Tambah kursus' : 'Mulai belajar'}</Text>
         )}

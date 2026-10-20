@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import CreateCourseForm from '../../components/create-course-form';
-import { Fonts, Palette } from '../../constants/theme';
+import { Fonts, Journal, Palette } from '../../constants/theme';
 import { useAuth } from '../../lib/auth';
 import { Course, useCourses } from '../../lib/courses';
 import { getLanguageName, getLevelName } from '../../lib/languages';
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   headingCopy: { flexShrink: 1 },
   kicker: { color: Palette.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 3 },
   title: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 36, fontWeight: '700' },
-  doodle: { color: '#8A70C8', fontSize: 26, transform: [{ rotate: '12deg' }] },
+  doodle: { color: Journal.doodle, fontSize: 26, transform: [{ rotate: '12deg' }] },
   accountCard: { flexDirection: 'row', alignItems: 'center', padding: 17, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 18, backgroundColor: Palette.paperAlt, transform: [{ rotate: '-0.3deg' }] },
   avatar: { width: 55, height: 55, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 18, backgroundColor: Palette.lavender, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-4deg' }] },
   avatarText: { fontFamily: Fonts.handwritten, fontSize: 29, fontWeight: '700', color: Palette.ink },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   confirmRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 22 },
   confirmBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(37,37,37,0.48)' },
   confirmCard: { width: '100%', maxWidth: 380, padding: 23, borderWidth: 1.6, borderColor: Palette.ink, borderRadius: 21, backgroundColor: Palette.paper, alignItems: 'center', transform: [{ rotate: '-0.4deg' }] },
-  confirmDoodle: { color: '#8A70C8', fontSize: 27, transform: [{ rotate: '12deg' }] },
+  confirmDoodle: { color: Journal.doodle, fontSize: 27, transform: [{ rotate: '12deg' }] },
   confirmTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 26, fontWeight: '700', textAlign: 'center', marginTop: 5 },
   confirmCopy: { color: Palette.muted, fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 6 },
   confirmActions: { flexDirection: 'row', width: '100%', gap: 10, marginTop: 21 },

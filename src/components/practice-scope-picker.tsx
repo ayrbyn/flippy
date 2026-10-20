@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Fonts, Palette } from '../constants/theme';
+import { Fonts, Journal, Palette } from '../constants/theme';
 import { PracticeScope } from '../lib/practice';
 
 export default function PracticeScopePicker({
@@ -34,8 +34,8 @@ export default function PracticeScopePicker({
           >
             <View style={styles.icon}><Text style={styles.iconText}>✎</Text></View>
             <View style={styles.copy}>
-              <Text style={styles.optionTitle}>Kata baru</Text>
-              <Text style={styles.description}>Kata yang belum pernah dilatih · {counts.newWords} kata</Text>
+              <Text style={styles.optionTitle}>Belum pernah dilatih</Text>
+              <Text style={styles.description}>{counts.newWords} kata tanpa riwayat latihan</Text>
             </View>
             <Text style={styles.arrow}>→</Text>
           </Pressable>
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   kicker: { color: Palette.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.6 },
   title: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 27, fontWeight: '700', marginTop: 2 },
-  doodle: { color: '#8A70C8', fontSize: 27, transform: [{ rotate: '12deg' }] },
+  doodle: { color: Journal.doodle, fontSize: 27, transform: [{ rotate: '12deg' }] },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: 74, padding: 11, borderWidth: 1.2, borderColor: Palette.ink, borderRadius: 16, marginTop: 9, gap: 11 },
   newOption: { backgroundColor: Palette.yellow },
   allOption: { backgroundColor: Palette.lavender },

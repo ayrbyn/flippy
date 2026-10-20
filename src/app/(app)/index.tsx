@@ -19,7 +19,7 @@ import { getLanguageName, getLevelName } from '../../lib/languages';
 import { countPracticePool, countWordsAddedToday, PracticePoolCounts, PracticeScope } from '../../lib/practice';
 import { useProfile } from '../../lib/profile';
 import { supabase } from '../../lib/supabase';
-import { Fonts, Palette } from '../../constants/theme';
+import { Fonts, Journal, Palette } from '../../constants/theme';
 
 export default function HomeScreen() {
   const { session } = useAuth();
@@ -43,7 +43,7 @@ export default function HomeScreen() {
       ]);
       setPracticeCounts(pool);
       setTodayCount(today);
-    } catch (_e) {
+    } catch {
       setPracticeCounts(null);
     }
   }, [courseId]);
@@ -150,7 +150,7 @@ export default function HomeScreen() {
           {practiceCounts === null
             ? 'Memuat...'
             : practiceCounts.allWords > 0
-              ? `${practiceCounts.newWords} kata baru · ${practiceCounts.allWords} total kartu`
+              ? `${practiceCounts.newWords} belum pernah dilatih · ${practiceCounts.allWords} total kartu`
               : 'Tambahkan flashcard untuk mulai latihan'}
         </Text>
         <Pressable
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   doodle: {
     fontSize: 38,
-    color: '#8A70C8',
+    color: Journal.doodle,
     transform: [{ rotate: '12deg' }],
   },
   email: {
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   barBackground: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#E9DFD0',
+    backgroundColor: Palette.line,
     borderWidth: 1,
     borderColor: Palette.ink,
     overflow: 'hidden',
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   barFill: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#8CA97D',
+    backgroundColor: Journal.correct,
   },
   errorText: {
     fontSize: 15,

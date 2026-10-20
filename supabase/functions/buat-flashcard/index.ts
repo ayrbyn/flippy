@@ -1,5 +1,5 @@
 // Edge Function: buat-flashcard
-// Alur: cek login -> cek kata sudah ada -> cek cache umum -> cek batas harian
+// Alur: cek login -> cek kata sudah ada -> cek cache umum
 //       -> panggil OpenRouter -> validasi -> simpan ke cache umum dan ke kata pengguna.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -36,6 +36,11 @@ type Card = {
   example_sentence: string;
   example_translation: string | null;
   word_form_in_sentence: string;
+  example_sentence_2: string;
+  example_translation_2: string | null;
+  word_form_in_sentence_2: string;
+  accepted_answers: string[];
+  accepted_blank_answers: string[];
 };
 
 class AiBusyError extends Error {}
@@ -95,8 +100,22 @@ function validateCard(raw: unknown): Card {
   const definition = read('definition', true) as string;
   const sentence = read('example_sentence', true) as string;
   const form = read('word_form_in_sentence', true) as string;
+  const sentence2 = read('example_sentence_2', true) as string;
+  const form2 = read('word_form_in_sentence_2', true) as string;
+  const acceptedAnswers = Array.isArray(r.accepted_answers)
+    ? r.accepted_answers
+        .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+        .map((value) => value.trim().slice(0, 100))
+        .slice(0, 5)
+    : [];
+  const acceptedBlankAnswers = Array.isArray(r.accepted_blank_answers)
+    ? r.accepted_blank_answers
+        .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+        .map((value) => value.trim().slice(0, 100))
+        .slice(0, 5)
+    : [];
 
-  if (word.length > 100 || definition.length > 400 || sentence.length > 400) {
+  if (word.length > 100 || definition.length > 400 || sentence.length > 400 || sentence2.length > 400) {
     throw new Error('Jawaban AI terlalu panjang');
   }
 
@@ -106,6 +125,11 @@ function validateCard(raw: unknown): Card {
     throw new Error('word_form_in_sentence tidak ditemukan di kalimat');
   }
   const exactForm = sentence.slice(index, index + form.length);
+  const index2 = sentence2.toLowerCase().indexOf(form2.toLowerCase());
+  if (index2 === -1) {
+    throw new Error('word_form_in_sentence_2 tidak ditemukan di kalimat kedua');
+  }
+  const exactForm2 = sentence2.slice(index2, index2 + form2.length);
 
   return {
     word,
@@ -115,6 +139,11 @@ function validateCard(raw: unknown): Card {
     example_sentence: sentence,
     example_translation: read('example_translation', false),
     word_form_in_sentence: exactForm,
+    accepted_answers: Array.from(new Set([word, exactForm, ...acceptedAnswers])),
+    accepted_blank_answers: Array.from(new Set([exactForm, exactForm2, ...acceptedBlankAnswers])),
+    example_sentence_2: sentence2,
+    example_translation_2: read('example_translation_2', false),
+    word_form_in_sentence_2: exactForm2,
   };
 }
 
@@ -154,7 +183,15 @@ async function generateCard(
     '- "example_sentence": one natural sentence in ' + target + ' that uses the word, matching the level, 5 to 14 words\n' +
     '- "example_translation": translation of the sentence in ' + explanation + '\n' +
     '- "word_form_in_sentence": the exact text of the word as it appears inside example_sentence, ' +
-    'copied character by character, including any inflection\n\n' +
+    'copied character by character, including any inflection\n' +
+    '- "example_sentence_2": a second natural, distinct sentence in ' + target + ' using the same sense, 5 to 14 words\n' +
+    '- "example_translation_2": translation of the second sentence in ' + explanation + '\n' +
+    '- "word_form_in_sentence_2": exact form of the word copied from example_sentence_2\n' +
+    '- "accepted_answers": an array of 0 to 4 unambiguous target-language synonyms or valid forms ' +
+    'for this exact sense; include only answers that can safely replace the word in the example sentence. ' +
+    'Do not include translations or related words\n' +
+    '- "accepted_blank_answers": an array of 0 to 4 inflections or spelling variants that can replace ' +
+    'word_form_in_sentence in the example sentence without changing its grammar or meaning\n\n' +
     'If the input is not a real word or phrase in ' + target + ', return {"error": "invalid_word"} instead.';
 
   let lastError = 'Gagal membuat flashcard';
@@ -300,57 +337,91 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     let shared = cached;
-    const fromCache = !!cached;
+    let fromCache = !!cached;
 
     // 3. Belum ada di cache: minta AI membuat kartu
     if (!shared) {
-      let card: Card;
-      try {
-        card = await generateCard(
-          word,
-          course.target_language,
-          course.explanation_language,
-          course.level
-        );
-      } catch (e) {
-        if (e instanceof InvalidWordError) {
-          return json({ error: 'Kata tidak dikenali di bahasa ini.', code: 'invalid_word' }, 422);
-        }
-        if (e instanceof AiBusyError) {
-          return json({ error: 'Layanan AI sedang sibuk. Coba lagi nanti.', code: 'ai_busy' }, 503);
-        }
-        console.error('generateCard gagal:', errorMessage(e));
-        return json({ error: 'AI gagal membuat flashcard. Coba lagi.', code: 'ai_failed' }, 502);
+      const { data: lockToken, error: lockError } = await admin.rpc('claim_flashcard_generation', {
+        p_word_normalized: normalized,
+        p_target_language: course.target_language,
+        p_explanation_language: course.explanation_language,
+      });
+      if (lockError) throw lockError;
+      if (!lockToken) {
+        return json({ error: 'Flashcard ini sedang dibuat. Coba lagi sebentar.', code: 'ai_busy' }, 409);
       }
 
-      // Simpan ke cache umum
-      const { data: inserted, error: insertError } = await admin
-        .from('shared_flashcards')
-        .insert({
-          word_normalized: normalized,
-          target_language: course.target_language,
-          explanation_language: course.explanation_language,
-          ...card,
-        })
-        .select()
-        .single();
+      try {
+        // Another request may have filled the shared cache before this lock was acquired.
+        const { data: cachedAfterLock, error: cacheError } = await admin
+          .from('shared_flashcards')
+          .select('*')
+          .eq('word_normalized', normalized)
+          .eq('target_language', course.target_language)
+          .eq('explanation_language', course.explanation_language)
+          .maybeSingle();
+        if (cacheError) throw cacheError;
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          // Pengguna lain baru saja menyimpannya: pakai yang sudah ada
-          const { data: again } = await admin
-            .from('shared_flashcards')
-            .select('*')
-            .eq('word_normalized', normalized)
-            .eq('target_language', course.target_language)
-            .eq('explanation_language', course.explanation_language)
-            .maybeSingle();
-          shared = again;
+        if (cachedAfterLock) {
+          shared = cachedAfterLock;
+          fromCache = true;
         } else {
-          throw insertError;
+          let card: Card;
+          try {
+            card = await generateCard(
+              word,
+              course.target_language,
+              course.explanation_language,
+              course.level
+            );
+          } catch (e) {
+            if (e instanceof InvalidWordError) {
+              return json({ error: 'Kata tidak dikenali di bahasa ini.', code: 'invalid_word' }, 422);
+            }
+            if (e instanceof AiBusyError) {
+              return json({ error: 'Layanan AI sedang sibuk. Coba lagi nanti.', code: 'ai_busy' }, 503);
+            }
+            console.error('generateCard gagal:', errorMessage(e));
+            return json({ error: 'AI gagal membuat flashcard. Coba lagi.', code: 'ai_failed' }, 502);
+          }
+
+          // Simpan ke cache umum
+          const { data: inserted, error: insertError } = await admin
+            .from('shared_flashcards')
+            .insert({
+              word_normalized: normalized,
+              target_language: course.target_language,
+              explanation_language: course.explanation_language,
+              ...card,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            if (insertError.code === '23505') {
+              const { data: again } = await admin
+                .from('shared_flashcards')
+                .select('*')
+                .eq('word_normalized', normalized)
+                .eq('target_language', course.target_language)
+                .eq('explanation_language', course.explanation_language)
+                .maybeSingle();
+              shared = again;
+            } else {
+              throw insertError;
+            }
+          } else {
+            shared = inserted;
+          }
         }
-      } else {
-        shared = inserted;
+      } finally {
+        const { error: releaseError } = await admin.rpc('release_flashcard_generation', {
+          p_word_normalized: normalized,
+          p_target_language: course.target_language,
+          p_explanation_language: course.explanation_language,
+          p_lock_token: lockToken,
+        });
+        if (releaseError) console.warn('Gagal melepas generation lock:', releaseError.message);
       }
     }
 
@@ -372,6 +443,11 @@ Deno.serve(async (req: Request) => {
         example_sentence: shared.example_sentence,
         example_translation: shared.example_translation,
         word_form_in_sentence: shared.word_form_in_sentence,
+        example_sentence_2: shared.example_sentence_2,
+        example_translation_2: shared.example_translation_2,
+        word_form_in_sentence_2: shared.word_form_in_sentence_2,
+        accepted_answers: shared.accepted_answers ?? [shared.word, shared.word_form_in_sentence],
+        accepted_blank_answers: shared.accepted_blank_answers ?? [shared.word_form_in_sentence],
       })
       .select()
       .single();

@@ -22,8 +22,8 @@ type ProfileState = {
   // Streak yang ditampilkan: jadi 0 kalau kemarin tidak latihan
   streak: number;
   refresh: () => Promise<void>;
-  // Dipanggil setiap selesai menjawab satu soal
-  recordPractice: (xpGained: number) => Promise<void>;
+  // Sinkronkan hasil profil yang dikembalikan oleh transaksi jawaban.
+  syncPracticeResult: (value: Profile) => void;
 };
 
 const ProfileContext = createContext<ProfileState | null>(null);
@@ -44,60 +44,33 @@ function yesterdayString(): string {
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const profileRef = useRef<Profile | null>(null);
+  const profileRevision = useRef(0);
 
   const applyProfile = useCallback((value: Profile | null) => {
-    profileRef.current = value;
     setProfile(value);
   }, []);
 
   const refresh = useCallback(async () => {
     if (!session) return;
+    const revision = profileRevision.current;
     const { data } = await supabase
       .from('profiles')
       .select('total_xp, current_streak, longest_streak, last_practice_date')
       .eq('id', session.user.id)
       .maybeSingle();
-    applyProfile((data as Profile | null) ?? null);
+    if (revision === profileRevision.current) {
+      applyProfile((data as Profile | null) ?? null);
+    }
   }, [session, applyProfile]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const recordPractice = useCallback(
-    async (xpGained: number) => {
-      const current = profileRef.current;
-      if (!session || !current) return;
-
-      const today = localDateString();
-      let newStreak = current.current_streak;
-
-      if (current.last_practice_date !== today) {
-        newStreak =
-          current.last_practice_date === yesterdayString()
-            ? current.current_streak + 1
-            : 1;
-      }
-
-      const updated: Profile = {
-        total_xp: current.total_xp + xpGained,
-        current_streak: newStreak,
-        longest_streak: Math.max(current.longest_streak, newStreak),
-        last_practice_date: today,
-      };
-
-      const { error } = await supabase
-        .from('profiles')
-        .update(updated)
-        .eq('id', session.user.id);
-
-      if (!error) {
-        applyProfile(updated);
-      }
-    },
-    [session, applyProfile]
-  );
+  const syncPracticeResult = useCallback((value: Profile) => {
+    profileRevision.current += 1;
+    applyProfile(value);
+  }, [applyProfile]);
 
   const streak = useMemo(() => {
     if (!profile || !profile.last_practice_date) return 0;
@@ -109,7 +82,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [profile]);
 
   return (
-    <ProfileContext.Provider value={{ profile, streak, refresh, recordPractice }}>
+    <ProfileContext.Provider value={{ profile, streak, refresh, syncPracticeResult }}>
       {children}
     </ProfileContext.Provider>
   );

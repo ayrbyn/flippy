@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -24,16 +24,16 @@ export default function ExploreScreen() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageIsError, setMessageIsError] = useState(false);
-  const rotation = useRef(new Animated.Value(0)).current;
-  const entrance = useRef(new Animated.Value(0.92)).current;
+  const [rotation] = useState(() => new Animated.Value(0));
+  const [entrance] = useState(() => new Animated.Value(0.92));
+  const cardId = card?.id;
 
   useEffect(() => {
-    if (!card) return;
+    if (!cardId) return;
     rotation.setValue(0);
-    setFlipped(false);
     entrance.setValue(0.92);
     Animated.spring(entrance, { toValue: 1, useNativeDriver: true, friction: 6, tension: 75 }).start();
-  }, [card?.id, entrance, rotation]);
+  }, [cardId, entrance, rotation]);
 
   async function handleCreate() {
     if (!activeCourse || !input.trim() || creating || (card && !card.saved_to_album_at)) return;
@@ -54,6 +54,7 @@ export default function ExploreScreen() {
       setMessageIsError(true);
       return;
     }
+    setFlipped(false);
     setCard(result.flashcard);
     setInput('');
     setMessage(
@@ -147,6 +148,8 @@ export default function ExploreScreen() {
                   <View style={styles.rule} />
                   <Text style={styles.example}>{card.example_sentence}</Text>
                   {card.example_translation ? <Text style={styles.translation}>{card.example_translation}</Text> : null}
+                  {card.example_sentence_2 ? <Text style={styles.exampleSecondary}>{card.example_sentence_2}</Text> : null}
+                  {card.example_translation_2 ? <Text style={styles.translation}>{card.example_translation_2}</Text> : null}
                   <Text style={styles.flipHint}>Ketuk untuk kembali</Text>
                 </Animated.View>
               </View>
@@ -187,7 +190,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 25, fontWeight: '700' },
   sparkle: { color: Palette.ink, fontSize: 22, transform: [{ rotate: '12deg' }] },
   cardTouch: { width: '100%' },
-  cardFrame: { height: 430, borderRadius: 22 },
+  cardFrame: { minHeight: 500, borderRadius: 22 },
   cardFace: { ...StyleSheet.absoluteFill, borderWidth: 1.6, borderColor: Palette.ink, borderRadius: 22, padding: 23, alignItems: 'center', justifyContent: 'center', backfaceVisibility: 'hidden', overflow: 'hidden' },
   cardFront: { backgroundColor: Palette.yellow },
   cardBack: { backgroundColor: Palette.lavender },
@@ -201,6 +204,7 @@ const styles = StyleSheet.create({
   doodleStar: { position: 'absolute', right: 22, top: 42, color: Palette.ink, fontSize: 25, transform: [{ rotate: '16deg' }] },
   definition: { color: Palette.ink, fontSize: 23, fontWeight: '600', lineHeight: 31, textAlign: 'center' },
   example: { color: Palette.ink, fontSize: 16, fontStyle: 'italic', lineHeight: 24, textAlign: 'center' },
+  exampleSecondary: { color: Palette.ink, fontSize: 14, fontStyle: 'italic', lineHeight: 21, textAlign: 'center', marginTop: 12 },
   translation: { color: Palette.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 9 },
   saveButton: { minHeight: 54, marginTop: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: Palette.ink, borderRadius: 15, backgroundColor: Palette.sage, transform: [{ rotate: '-0.5deg' }] },
   savedButton: { backgroundColor: Palette.blue },

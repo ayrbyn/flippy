@@ -68,7 +68,13 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    refresh();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return refresh();
+    });
+    return () => {
+      active = false;
+    };
   }, [refresh]);
 
   const createCourse = useCallback(

@@ -2,22 +2,24 @@
   "expo": {
     "name": "flippy",
     "slug": "flippy",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/flippy-app-icon.png",
     "scheme": "flippy",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/images/flippy-app-icon.png"
     },
     "android": {
+      "versionCode": 1,
       "icon": "./assets/images/flippy-app-icon.png",
       "adaptiveIcon": {
         "backgroundColor": "#FFF9EF",
         "foregroundImage": "./assets/images/flippy-mascot-foreground.png",
         "monochromeImage": "./assets/images/flippy-mascot-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.abyan7716.flippy"
     },
     "web": {
       "output": "static",
@@ -37,6 +39,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "68b27adb-2ad2-423c-9d91-d125a691d984"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/68b27adb-2ad2-423c-9d91-d125a691d984"
     }
   }
 }

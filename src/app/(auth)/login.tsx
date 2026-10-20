@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Fonts, Palette } from '../../constants/theme';
@@ -79,7 +78,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Email"
-        placeholderTextColor="#888888"
+        placeholderTextColor={Palette.muted}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
@@ -90,7 +89,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Password (minimal 6 karakter)"
-        placeholderTextColor="#888888"
+        placeholderTextColor={Palette.muted}
         secureTextEntry
         autoCapitalize="none"
         value={password}
@@ -109,7 +108,7 @@ export default function LoginScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={Palette.white} />
         ) : (
           <Text style={styles.buttonText}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
         )}

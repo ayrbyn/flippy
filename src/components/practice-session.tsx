@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,19 +15,18 @@ import { useCourses } from '../lib/courses';
 import {
   buildBlank,
   fetchPracticeWords,
-  normalizeAnswer,
+  localPracticeDate,
   PracticeMode,
   PracticeScope,
   PracticeWord,
   saveAnswer,
-  XP_PER_CORRECT,
 } from '../lib/practice';
 import { useProfile } from '../lib/profile';
-import { Fonts, Palette } from '../constants/theme';
+import { Fonts, Journal, Palette } from '../constants/theme';
 import { getLanguageName } from '../lib/languages';
 
 type Phase = 'loading' | 'error' | 'empty' | 'question' | 'feedback' | 'done';
-type PracticeQuestion = PracticeWord & { method: PracticeMode };
+type PracticeQuestion = PracticeWord & { method: PracticeMode; exampleIndex: 1 | 2 };
 
 function randomMethod(): PracticeMode {
   const methods: PracticeMode[] = ['fill_blank', 'recall_word'];
@@ -37,7 +36,7 @@ function randomMethod(): PracticeMode {
 export default function PracticeSession({ onExit, scope }: { onExit: () => void; scope: PracticeScope }) {
   const { session } = useAuth();
   const { activeCourse } = useCourses();
-  const { recordPractice } = useProfile();
+  const { syncPracticeResult } = useProfile();
 
   const [queue, setQueue] = useState<PracticeQuestion[]>([]);
   const [index, setIndex] = useState(0);
@@ -48,7 +47,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
   const [lastCorrect, setLastCorrect] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [stats, setStats] = useState({ correct: 0, wrong: 0, xp: 0 });
-  const requeued = useRef<Set<string>>(new Set());
+  const [lastXp, setLastXp] = useState(0);
 
   const courseId = activeCourse?.id ?? null;
 
@@ -60,7 +59,11 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
       try {
         const list = await fetchPracticeWords(courseId, scope);
         if (cancelled) return;
-        setQueue(list.map((word) => ({ ...word, method: randomMethod() })));
+        setQueue(list.map((word) => ({
+          ...word,
+          method: randomMethod(),
+          exampleIndex: word.example_sentence_2 && Math.random() < 0.5 ? 2 : 1,
+        })));
         setPhase(list.length === 0 ? 'empty' : 'question');
       } catch (e) {
         if (cancelled) return;
@@ -83,19 +86,10 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
     setSaving(true);
     setMessage(null);
 
-    const expectedAnswer = mode === 'fill_blank' ? current.word_form_in_sentence : current.word;
-    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(expectedAnswer);
-    const xp = isCorrect ? XP_PER_CORRECT : 0;
-
     try {
-      const updated = await saveAnswer(session.user.id, current, isCorrect, xp, mode);
-      await recordPractice(xp);
-
-      // Jawaban salah: kata muncul sekali lagi di akhir sesi
-      if (!isCorrect && !requeued.current.has(current.id)) {
-        requeued.current.add(current.id);
-        setQueue((prev) => [...prev, { ...updated, method: randomMethod() }]);
-      }
+      const result = await saveAnswer(current.id, answer, mode, hint, current.exampleIndex, localPracticeDate());
+      const { is_correct: isCorrect, xp_earned: xp } = result;
+      syncPracticeResult(result.profile);
 
       setStats((prev) => ({
         correct: prev.correct + (isCorrect ? 1 : 0),
@@ -103,12 +97,13 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
         xp: prev.xp + xp,
       }));
       setLastCorrect(isCorrect);
+      setLastXp(xp);
       setPhase('feedback');
-    } catch (_e) {
+    } catch {
       setMessage('Gagal menyimpan jawaban. Periksa koneksi lalu coba lagi.');
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   function handleNext() {
@@ -147,7 +142,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
       <View style={styles.center}>
         <Text style={styles.doneTitle}>Belum ada soal</Text>
         <Text style={styles.doneText}>
-          Tidak ada kata yang perlu diulang sekarang. Tambah kata baru atau
+        Tidak ada kata dalam kumpulan ini. Tambah kata baru atau
           kembali lagi nanti.
         </Text>
         <Pressable style={styles.button} onPress={onExit}>
@@ -176,9 +171,18 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
   }
 
   const mode = current.method;
-  const parts = buildBlank(current.example_sentence, current.word_form_in_sentence);
+  const currentSentence = current.exampleIndex === 2 && current.example_sentence_2
+    ? current.example_sentence_2
+    : current.example_sentence;
+  const currentWordForm = current.exampleIndex === 2 && current.word_form_in_sentence_2
+    ? current.word_form_in_sentence_2
+    : current.word_form_in_sentence;
+  const currentTranslation = current.exampleIndex === 2 && current.example_translation_2
+    ? current.example_translation_2
+    : current.example_translation;
+  const parts = buildBlank(currentSentence, currentWordForm);
   const inFeedback = phase === 'feedback';
-  const answerToShow = mode === 'fill_blank' ? current.word_form_in_sentence : current.word;
+  const answerToShow = mode === 'fill_blank' ? currentWordForm : current.word;
   const answerLetters = Array.from(answerToShow);
 
   return (
@@ -208,11 +212,11 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
             <Text style={styles.sentence}>
               {parts.before}
               <Text style={[styles.blank, inFeedback && (lastCorrect ? styles.blankCorrect : styles.blankWrong)]}>
-                {inFeedback ? current.word_form_in_sentence : '_____'}
+                {inFeedback ? currentWordForm : '_____'}
               </Text>
               {parts.after}
             </Text>
-            {current.example_translation ? <Text style={styles.translation}>{current.example_translation}</Text> : null}
+            {currentTranslation ? <Text style={styles.translation}>{currentTranslation}</Text> : null}
           </>
         ) : (
           <View style={styles.meaningCard}>
@@ -226,7 +230,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
           <View>
             <Pressable onPress={() => setHint(true)} disabled={hint}>
               <Text style={styles.hintLink}>
-                {hint ? 'Petunjuk:' : 'Lihat petunjuk'}
+                {hint ? 'Petunjuk aktif · XP benar berkurang' : 'Lihat petunjuk'}
               </Text>
             </Pressable>
             {hint ? (
@@ -256,7 +260,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
               disabled={saving || !answer.trim()}
             >
               {saving ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={Palette.white} />
               ) : (
                 <Text style={styles.buttonText}>Periksa</Text>
               )}
@@ -266,7 +270,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
           <View>
             <View style={[styles.feedback, lastCorrect ? styles.feedbackOk : styles.feedbackBad]}>
               <Text style={styles.feedbackTitle}>
-                {lastCorrect ? 'Benar! +' + XP_PER_CORRECT + ' XP' : 'Belum tepat'}
+                {lastCorrect ? `Benar! +${lastXp} XP` : 'Belum tepat'}
               </Text>
               {!lastCorrect ? (
                 <Text style={styles.feedbackText}>
@@ -276,6 +280,9 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
               <Text style={styles.feedbackText}>
                 {current.word}: {current.definition}
               </Text>
+              {lastCorrect && current.correct_count + (hint ? 0 : 1) >= 10 ? (
+                <Text style={styles.feedbackText}>Kata ini sudah masuk kategori hafal. ✨</Text>
+              ) : null}
             </View>
 
             <Pressable style={styles.button} onPress={handleNext}>
@@ -317,12 +324,12 @@ const styles = StyleSheet.create({
   },
   progress: {
     fontSize: 16,
-    color: '#555555',
+    color: Palette.muted,
     fontWeight: '600',
   },
   instruction: {
     fontSize: 14,
-    color: '#555555',
+    color: Palette.muted,
     marginBottom: 12,
   },
   sentence: {
@@ -333,29 +340,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   blank: {
-    color: '#2563EB',
+    color: Journal.link,
   },
   blankCorrect: {
-    color: '#15803D',
+    color: Journal.correct,
   },
   blankWrong: {
-    color: '#B91C1C',
+    color: Journal.incorrect,
   },
   translation: {
     fontSize: 16,
-    color: '#555555',
+    color: Palette.muted,
     fontStyle: 'italic',
     marginTop: 12,
     marginBottom: 24,
   },
   hintLink: {
     fontSize: 15,
-    color: '#2563EB',
+    color: Journal.link,
     marginBottom: 6,
   },
   hintText: {
     fontSize: 14,
-    color: '#333333',
+    color: Palette.ink,
     marginBottom: 12,
   },
   input: {
@@ -389,7 +396,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: '#B91C1C',
+    color: Journal.incorrect,
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
@@ -411,12 +418,12 @@ const styles = StyleSheet.create({
   feedbackTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111111',
+    color: Palette.ink,
     marginBottom: 6,
   },
   feedbackText: {
     fontSize: 15,
-    color: '#333333',
+    color: Palette.ink,
     marginTop: 2,
   },
   doneTitle: {
@@ -428,14 +435,14 @@ const styles = StyleSheet.create({
   },
   doneText: {
     fontSize: 17,
-    color: '#333333',
+    color: Palette.ink,
     textAlign: 'center',
     marginBottom: 4,
   },
   doneXp: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2563EB',
+    color: Journal.link,
     marginTop: 12,
     marginBottom: 24,
   },

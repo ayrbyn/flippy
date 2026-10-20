@@ -36,11 +36,21 @@ export const Colors = {
 } as const;
 
 export const Fonts = Platform.select({
-  ios: { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace', handwritten: 'Marker Felt' },
-  android: { sans: 'sans-serif', serif: 'serif', rounded: 'sans-serif-rounded', mono: 'monospace', handwritten: 'casual' },
-  default: { sans: 'normal', serif: 'serif', rounded: 'normal', mono: 'monospace', handwritten: 'cursive' },
-  web: { sans: 'var(--font-display)', serif: 'var(--font-serif)', rounded: 'var(--font-rounded)', mono: 'var(--font-mono)', handwritten: 'var(--font-handwritten)' },
+  ios: { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace', handwritten: 'Caveat' },
+  android: { sans: 'sans-serif', serif: 'serif', rounded: 'sans-serif-rounded', mono: 'monospace', handwritten: 'Caveat' },
+  default: { sans: 'normal', serif: 'serif', rounded: 'normal', mono: 'monospace', handwritten: 'Caveat' },
+  web: { sans: 'var(--font-display)', serif: 'var(--font-serif)', rounded: 'var(--font-rounded)', mono: 'var(--font-mono)', handwritten: 'Caveat' },
 });
+
+export const Journal = {
+  borderWidth: 1.5,
+  borderRadius: 16,
+  doodle: '#8A70C8',
+  secondaryInk: '#55504A',
+  link: '#6B59A6',
+  correct: '#44734A',
+  incorrect: '#A9473B',
+} as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
