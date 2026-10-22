@@ -11,14 +11,21 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Fonts, Palette } from '../../constants/theme';
+import { FlashcardPastels, Palette } from '../../constants/theme';
+import FlippyMascot from '../../components/flippy-mascot';
 import { useCourses } from '../../lib/courses';
-import { generateFlashcard, GenerateResult, saveWordToAlbum, UserWord } from '../../lib/flashcards';
+import {
+  FlashcardPreview,
+  generateFlashcard,
+  GenerateResult,
+  saveFlashcardToAlbum,
+} from '../../lib/flashcards';
 
 export default function ExploreScreen() {
   const { activeCourse } = useCourses();
   const [input, setInput] = useState('');
-  const [card, setCard] = useState<UserWord | null>(null);
+  const [card, setCard] = useState<FlashcardPreview | null>(null);
+  const [cardCourseId, setCardCourseId] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,6 +34,7 @@ export default function ExploreScreen() {
   const [rotation] = useState(() => new Animated.Value(0));
   const [entrance] = useState(() => new Animated.Value(0.92));
   const cardId = card?.id;
+  const cardColorIndex = card ? [...card.word].reduce((sum, character) => sum + character.charCodeAt(0), 0) % FlashcardPastels.length : 0;
 
   useEffect(() => {
     if (!cardId) return;
@@ -36,12 +44,13 @@ export default function ExploreScreen() {
   }, [cardId, entrance, rotation]);
 
   async function handleCreate() {
-    if (!activeCourse || !input.trim() || creating || (card && !card.saved_to_album_at)) return;
+    if (!activeCourse || !input.trim() || creating) return;
+    const courseId = activeCourse.id;
     setCreating(true);
     setMessage(null);
     let result: GenerateResult;
     try {
-      result = await generateFlashcard(activeCourse.id, input.trim());
+      result = await generateFlashcard(courseId, input.trim());
     } catch (error) {
       setCreating(false);
       setMessage(error instanceof Error ? error.message : 'Kartu gagal dibuat. Coba lagi.');
@@ -55,7 +64,11 @@ export default function ExploreScreen() {
       return;
     }
     setFlipped(false);
-    setCard(result.flashcard);
+    const preview = result.flashcard.saved_to_album_at
+      ? result.flashcard
+      : { ...result.flashcard, id: `draft-${Date.now()}`, saved_to_album_at: null };
+    setCard(preview);
+    setCardCourseId(courseId);
     setInput('');
     setMessage(
       result.status === 'exists'
@@ -68,11 +81,11 @@ export default function ExploreScreen() {
   }
 
   async function handleSave() {
-    if (!card || card.saved_to_album_at || saving) return;
+    if (!card || !cardCourseId || card.saved_to_album_at || saving) return;
     setSaving(true);
     setMessage(null);
     try {
-      const saved = await saveWordToAlbum(card.id);
+      const saved = await saveFlashcardToAlbum(cardCourseId, card);
       setCard(saved);
       setMessage('Yay! Flashcard tersimpan di album bulan ini.');
       setMessageIsError(false);
@@ -114,35 +127,33 @@ export default function ExploreScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="done"
-            editable={!!activeCourse && !creating && !(card && !card.saved_to_album_at)}
+            editable={!!activeCourse && !creating}
           />
-          <Pressable accessibilityRole="button" onPress={handleCreate} disabled={!activeCourse || !input.trim() || creating || !!(card && !card.saved_to_album_at)} style={[styles.createButton, (!input.trim() || creating || (card && !card.saved_to_album_at)) && styles.disabledButton]}>
-            {creating ? <ActivityIndicator color={Palette.ink} /> : <Text style={styles.createText}>Buat kartu</Text>}
+          <Pressable accessibilityRole="button" onPress={handleCreate} disabled={!activeCourse || !input.trim() || creating} style={[styles.createButton, (!input.trim() || creating) && styles.disabledButton]}>
+            {creating ? <ActivityIndicator color={Palette.white} /> : <Text style={styles.createText}>+</Text>}
           </Pressable>
         </View>
-        {card && !card.saved_to_album_at ? <Text style={styles.helper}>Simpan kartu ini ke album sebelum membuat kartu berikutnya.</Text> : null}
+        {card && !card.saved_to_album_at ? <Text style={styles.helper}>Kartu ini masih draft. Membuat kartu baru akan menggantikannya; hanya kartu yang disimpan masuk ke koleksi.</Text> : null}
         {message ? <Text accessibilityLiveRegion="polite" style={[styles.message, messageIsError && styles.errorMessage]}>{message}</Text> : null}
 
         {card ? (
           <Animated.View style={[styles.cardArea, { opacity: entrance, transform: [{ scale: entrance }] }]}>
             <View style={styles.cardHeading}>
               <Text style={styles.sectionTitle}>Kartu barumu</Text>
-              <Text style={styles.sparkle}>✳</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={flipped ? `Balik kartu ${card.word}` : `Lihat arti ${card.word}`} onPress={flipCard} style={styles.cardTouch}>
               <View style={styles.cardFrame}>
-                <Animated.View pointerEvents={flipped ? 'none' : 'auto'} style={[styles.cardFace, styles.cardFront, { transform: [{ perspective: 1000 }, { rotateY: frontRotation }] }]}>
-                  <View style={styles.tape} />
-                  <Text style={styles.cardLabel}>KATA BARU</Text>
+                <Animated.View pointerEvents={flipped ? 'none' : 'auto'} style={[styles.cardFace, styles.cardFront, { backgroundColor: FlashcardPastels[cardColorIndex], transform: [{ perspective: 1000 }, { rotateY: frontRotation }] }]}>
+                  <View style={styles.mascotCorner}><FlippyMascot size={96} /></View>
+                  <Text style={[styles.cardLabel, styles.cardLabelFront]}>KATA BARU</Text>
                   <Text style={styles.word}>{card.word}</Text>
                   {card.reading ? <Text style={styles.reading}>{card.reading}</Text> : null}
                   {card.part_of_speech ? <Text style={styles.badge}>{card.part_of_speech}</Text> : null}
-                  <View style={styles.rule} />
-                  <Text style={styles.flipHint}>Ketuk untuk membalik</Text>
-                  <Text style={styles.doodleStar}>✳</Text>
+                  <View style={[styles.rule, styles.ruleFront]} />
+                  <Text style={[styles.flipHint, styles.flipHintFront]}>Ketuk untuk membalik</Text>
                 </Animated.View>
-                <Animated.View pointerEvents={flipped ? 'auto' : 'none'} style={[styles.cardFace, styles.cardBack, { transform: [{ perspective: 1000 }, { rotateY: backRotation }] }]}>
-                  <View style={styles.tape} />
+                <Animated.View pointerEvents={flipped ? 'auto' : 'none'} style={[styles.cardFace, styles.cardBack, { backgroundColor: FlashcardPastels[(cardColorIndex + 1) % FlashcardPastels.length], transform: [{ perspective: 1000 }, { rotateY: backRotation }] }]}>
+                  <View style={styles.backMascot}><FlippyMascot size={55} /></View>
                   <Text style={styles.cardLabel}>ARTI & CONTOH</Text>
                   <Text style={styles.definition}>{card.definition}</Text>
                   <View style={styles.rule} />
@@ -155,13 +166,13 @@ export default function ExploreScreen() {
               </View>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={handleSave} disabled={!!card.saved_to_album_at || saving} style={[styles.saveButton, card.saved_to_album_at && styles.savedButton]}>
-              {saving ? <ActivityIndicator color={Palette.ink} /> : <Text style={styles.saveText}>{card.saved_to_album_at ? 'Tersimpan di Album' : 'Simpan flashcard ke Album'}</Text>}
+              {saving ? <ActivityIndicator color={Palette.ink} /> : <Text style={[styles.saveText, card.saved_to_album_at && styles.savedText]}>{card.saved_to_album_at ? 'Tersimpan di Album' : 'Simpan flashcard ke Album'}</Text>}
             </Pressable>
             {card.saved_to_album_at ? <Text style={styles.savedNote}>Disimpan dalam album berdasarkan bulan dibuat.</Text> : null}
           </Animated.View>
         ) : (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyDoodle}>✎</Text>
+            <FlippyMascot size={118} />
             <Text style={styles.emptyTitle}>Satu kata baru, satu kartu kecil.</Text>
             <Text style={styles.emptySubtitle}>Ketik kata di atas. Kartu besarnya akan muncul di sini.</Text>
           </View>
@@ -172,46 +183,48 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Palette.paper },
-  content: { paddingHorizontal: 20, paddingTop: 58, paddingBottom: 124, flexGrow: 1 },
-  kicker: { color: Palette.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.8, marginBottom: 4 },
-  title: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 37, fontWeight: '700' },
-  subtitle: { color: Palette.muted, fontSize: 14, lineHeight: 20, marginTop: 3, marginBottom: 22 },
+  root: { flex: 1, backgroundColor: Palette.background },
+  content: { paddingHorizontal: 20, paddingTop: 32, paddingBottom: 124, flexGrow: 1 },
+  kicker: { color: Palette.secondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 5 },
+  title: { color: Palette.ink, fontSize: 32, lineHeight: 38, fontWeight: '800' },
+  subtitle: { color: Palette.charcoalBlack, fontSize: 14, lineHeight: 20, marginTop: 4, marginBottom: 22 },
   entryRow: { flexDirection: 'row', alignItems: 'stretch', gap: 9 },
-  input: { flex: 1, minWidth: 0, minHeight: 54, paddingHorizontal: 14, borderWidth: 1.5, borderColor: Palette.ink, borderRadius: 15, color: Palette.ink, backgroundColor: Palette.paperAlt, fontSize: 16 },
-  createButton: { minWidth: 112, minHeight: 54, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: Palette.ink, borderRadius: 15, backgroundColor: Palette.yellow, transform: [{ rotate: '1deg' }] },
+  input: { flex: 1, minWidth: 0, minHeight: 54, paddingHorizontal: 14, borderWidth: 1, borderColor: Palette.primaryBorder, borderRadius: 17, color: Palette.ink, backgroundColor: Palette.white, fontSize: 16 },
+  createButton: { minWidth: 56, minHeight: 54, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: Palette.primary },
   disabledButton: { opacity: 0.62 },
-  createText: { color: Palette.ink, fontSize: 14, fontWeight: '700' },
-  helper: { color: Palette.muted, fontSize: 12, lineHeight: 18, marginTop: 8 },
-  message: { color: Palette.success, fontSize: 13, lineHeight: 19, marginTop: 12 },
-  errorMessage: { color: Palette.error },
+  createText: { color: Palette.white, fontSize: 20, fontWeight: '700' },
+  helper: { color: Palette.ink, fontSize: 12, lineHeight: 18, marginTop: 8 },
+  message: { color: Palette.ink, fontSize: 13, lineHeight: 19, marginTop: 12 },
+  errorMessage: { color: Palette.ink },
   cardArea: { marginTop: 26 },
   cardHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 3, marginBottom: 10 },
-  sectionTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 25, fontWeight: '700' },
-  sparkle: { color: Palette.ink, fontSize: 22, transform: [{ rotate: '12deg' }] },
+  sectionTitle: { color: Palette.ink, fontSize: 22, fontWeight: '800' },
   cardTouch: { width: '100%' },
-  cardFrame: { minHeight: 500, borderRadius: 22 },
-  cardFace: { ...StyleSheet.absoluteFill, borderWidth: 1.6, borderColor: Palette.ink, borderRadius: 22, padding: 23, alignItems: 'center', justifyContent: 'center', backfaceVisibility: 'hidden', overflow: 'hidden' },
-  cardFront: { backgroundColor: Palette.yellow },
-  cardBack: { backgroundColor: Palette.lavender },
-  tape: { position: 'absolute', top: -1, alignSelf: 'center', width: 86, height: 19, backgroundColor: 'rgba(255,255,255,0.58)', transform: [{ rotate: '-3deg' }] },
-  cardLabel: { color: Palette.muted, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginBottom: 21 },
-  word: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 52, fontWeight: '700', textAlign: 'center' },
-  reading: { color: Palette.muted, fontSize: 15, marginTop: 6 },
-  badge: { overflow: 'hidden', borderRadius: 15, paddingVertical: 5, paddingHorizontal: 12, marginTop: 13, color: Palette.ink, backgroundColor: Palette.paperAlt, fontSize: 12 },
-  rule: { width: '100%', height: 1, backgroundColor: 'rgba(37,37,37,0.24)', marginVertical: 20 },
-  flipHint: { color: Palette.muted, fontSize: 13, textAlign: 'center', marginTop: 8 },
-  doodleStar: { position: 'absolute', right: 22, top: 42, color: Palette.ink, fontSize: 25, transform: [{ rotate: '16deg' }] },
-  definition: { color: Palette.ink, fontSize: 23, fontWeight: '600', lineHeight: 31, textAlign: 'center' },
-  example: { color: Palette.ink, fontSize: 16, fontStyle: 'italic', lineHeight: 24, textAlign: 'center' },
-  exampleSecondary: { color: Palette.ink, fontSize: 14, fontStyle: 'italic', lineHeight: 21, textAlign: 'center', marginTop: 12 },
-  translation: { color: Palette.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 9 },
-  saveButton: { minHeight: 54, marginTop: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: Palette.ink, borderRadius: 15, backgroundColor: Palette.sage, transform: [{ rotate: '-0.5deg' }] },
-  savedButton: { backgroundColor: Palette.blue },
-  saveText: { color: Palette.ink, fontSize: 15, fontWeight: '700' },
-  savedNote: { color: Palette.muted, textAlign: 'center', fontSize: 12, marginTop: 8 },
-  emptyCard: { minHeight: 220, marginTop: 28, borderWidth: 1.3, borderColor: Palette.line, borderRadius: 19, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', padding: 24, transform: [{ rotate: '-0.5deg' }] },
-  emptyDoodle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 34, transform: [{ rotate: '-15deg' }] },
-  emptyTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 23, fontWeight: '700', textAlign: 'center', marginTop: 8 },
-  emptySubtitle: { color: Palette.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 5 },
+  cardFrame: { minHeight: 500, borderRadius: 25 },
+  cardFace: { ...StyleSheet.absoluteFill, borderRadius: 25, padding: 23, alignItems: 'center', justifyContent: 'center', backfaceVisibility: 'hidden', overflow: 'hidden' },
+  cardFront: { backgroundColor: Palette.primarySoft },
+  cardBack: { backgroundColor: Palette.white },
+  cardLabel: { color: Palette.primary, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 21 },
+  cardLabelFront: { color: Palette.ink },
+  word: { color: Palette.ink, fontSize: 42, lineHeight: 50, fontWeight: '800', textAlign: 'center' },
+  reading: { color: Palette.ink, fontSize: 15, marginTop: 6 },
+  badge: { overflow: 'hidden', borderRadius: 15, paddingVertical: 5, paddingHorizontal: 12, marginTop: 13, color: Palette.ink, backgroundColor: Palette.background, fontSize: 12, fontWeight: '700' },
+  rule: { width: '100%', height: 1, backgroundColor: Palette.primaryBorder, marginVertical: 20 },
+  ruleFront: { backgroundColor: Palette.ink, opacity: 0.25 },
+  flipHint: { color: Palette.ink, fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 8 },
+  flipHintFront: { color: Palette.ink },
+  definition: { color: Palette.charcoalBlack, fontSize: 23, fontWeight: '800', lineHeight: 31, textAlign: 'center' },
+  example: { color: Palette.charcoalBlack, fontSize: 16, fontStyle: 'italic', lineHeight: 24, textAlign: 'center' },
+  exampleSecondary: { color: Palette.charcoalBlack, fontSize: 14, fontStyle: 'italic', lineHeight: 21, textAlign: 'center', marginTop: 12 },
+  translation: { color: Palette.royalBlue, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 9 },
+  saveButton: { minHeight: 54, marginTop: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: Palette.primary },
+  savedButton: { backgroundColor: Palette.green },
+  saveText: { color: Palette.white, fontSize: 15, fontWeight: '800' },
+  savedText: { color: Palette.ink },
+  savedNote: { color: Palette.ink, textAlign: 'center', fontSize: 12, marginTop: 8 },
+  emptyCard: { minHeight: 220, marginTop: 28, borderRadius: 22, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: Palette.white },
+  mascotCorner: { position: 'absolute', top: 8, right: 8, opacity: 0.96 },
+  backMascot: { position: 'absolute', bottom: 0, right: 0, opacity: 0.42 },
+  emptyTitle: { color: Palette.ink, fontSize: 22, fontWeight: '800', textAlign: 'center', marginTop: 8 },
+  emptySubtitle: { color: Palette.ink, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 5 },
 });

@@ -1,16 +1,11 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../lib/auth';
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  const [fontsLoaded, fontError] = useFonts({
-    Caveat: require('../../assets/fonts/Caveat.ttf'),
-  });
-
-  if (loading || (!fontsLoaded && !fontError)) {
+  if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" />

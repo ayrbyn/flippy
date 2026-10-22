@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import CreateCourseForm from '../../components/create-course-form';
-import { Fonts, Journal, Palette } from '../../constants/theme';
+import { Palette } from '../../constants/theme';
 import { useAuth } from '../../lib/auth';
 import { Course, useCourses } from '../../lib/courses';
 import { getLanguageName, getLevelName } from '../../lib/languages';
@@ -29,7 +29,6 @@ function localDayStart() {
 function CourseNote({ course, active, onPress }: { course: Course; active: boolean; onPress?: () => void }) {
   const contents = (
     <>
-      <View style={styles.noteTape} />
       <Text style={styles.courseName}>{getLanguageName(course.target_language)}</Text>
       <Text style={styles.courseDetail}>Arti dalam {getLanguageName(course.explanation_language)}</Text>
       <View style={styles.courseFooter}>
@@ -119,7 +118,6 @@ export default function UserScreen() {
             <Text style={styles.kicker}>HALAMAN PEMILIK JURNAL</Text>
             <Text style={styles.title}>Tentang saya</Text>
           </View>
-          <Text accessibilityElementsHidden style={styles.doodle}>~ ✳</Text>
         </View>
 
         <View style={styles.accountCard}>
@@ -133,7 +131,6 @@ export default function UserScreen() {
 
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Progres akun</Text>
-          <Text style={styles.sectionDoodle}>* catatanmu</Text>
         </View>
         <View style={styles.statsRow}>
           <View style={[styles.statCard, styles.xpCard]}>
@@ -168,7 +165,6 @@ export default function UserScreen() {
 
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Bahasa yang kupelajari</Text>
-          <Text style={styles.countNote}>{courses.length} kursus</Text>
         </View>
         {courses.length ? (
           <View style={styles.courseList}>
@@ -199,7 +195,6 @@ export default function UserScreen() {
         <View style={styles.confirmRoot}>
           <Pressable accessibilityLabel="Tutup konfirmasi" style={styles.confirmBackdrop} onPress={() => setCourseToSwitch(null)} />
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmDoodle}>✳</Text>
             <Text style={styles.confirmTitle}>Ganti halaman belajar?</Text>
             <Text style={styles.confirmCopy}>
               Apakah kamu ingin pindah ke bahasa {courseToSwitch ? getLanguageName(courseToSwitch.target_language) : ''}?
@@ -239,72 +234,67 @@ export default function UserScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Palette.paper },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Palette.paper },
-  content: { paddingHorizontal: 20, paddingTop: 58, paddingBottom: 124 },
+  root: { flex: 1, backgroundColor: Palette.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Palette.background },
+  content: { paddingHorizontal: 20, paddingTop: 76, paddingBottom: 124 },
   headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   headingCopy: { flexShrink: 1 },
-  kicker: { color: Palette.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 3 },
-  title: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 36, fontWeight: '700' },
-  doodle: { color: Journal.doodle, fontSize: 26, transform: [{ rotate: '12deg' }] },
-  accountCard: { flexDirection: 'row', alignItems: 'center', padding: 17, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 18, backgroundColor: Palette.paperAlt, transform: [{ rotate: '-0.3deg' }] },
-  avatar: { width: 55, height: 55, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 18, backgroundColor: Palette.lavender, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-4deg' }] },
-  avatarText: { fontFamily: Fonts.handwritten, fontSize: 29, fontWeight: '700', color: Palette.ink },
+  kicker: { color: Palette.ink, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 4 },
+  title: { color: Palette.ink, fontSize: 32, lineHeight: 38, fontWeight: '800' },
+  accountCard: { flexDirection: 'row', alignItems: 'center', padding: 17, borderRadius: 22, backgroundColor: Palette.white },
+  avatar: { width: 58, height: 58, borderRadius: 19, backgroundColor: Palette.mainGreen, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 28, fontWeight: '900', color: Palette.charcoalBlack },
   accountCopy: { flex: 1, minWidth: 0, marginLeft: 14 },
-  accountLabel: { color: Palette.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  email: { color: Palette.ink, fontSize: 15, fontWeight: '600', marginTop: 4 },
-  joined: { color: Palette.muted, fontSize: 12, marginTop: 4 },
+  accountLabel: { color: Palette.ink, fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  email: { color: Palette.ink, fontSize: 15, fontWeight: '700', marginTop: 4 },
+  joined: { color: Palette.ink, fontSize: 12, marginTop: 4 },
   sectionHeading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 25, marginBottom: 10 },
-  sectionTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 25, fontWeight: '700' },
-  sectionDoodle: { color: Palette.muted, fontFamily: Fonts.handwritten, fontSize: 15, transform: [{ rotate: '-4deg' }] },
-  countNote: { color: Palette.muted, fontSize: 12 },
+  sectionTitle: { color: Palette.ink, fontSize: 24, lineHeight: 30, fontWeight: '800' },
   statsRow: { flexDirection: 'row', gap: 11 },
-  statCard: { flex: 1, minHeight: 94, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 17, alignItems: 'center', justifyContent: 'center', padding: 12 },
-  xpCard: { backgroundColor: Palette.yellow, transform: [{ rotate: '-0.5deg' }] },
-  streakCard: { backgroundColor: Palette.coral, transform: [{ rotate: '0.5deg' }] },
-  statValue: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 31, fontWeight: '700' },
-  statLabel: { color: Palette.ink, fontSize: 12, marginTop: 1, textAlign: 'center' },
-  progressCard: { marginTop: 12, padding: 15, borderWidth: 1.3, borderColor: Palette.ink, borderRadius: 17, backgroundColor: Palette.blue },
-  cardLabel: { color: Palette.muted, fontSize: 12, fontWeight: '700', marginBottom: 12 },
+  statCard: { flex: 1, minHeight: 94, borderRadius: 20, alignItems: 'center', justifyContent: 'center', padding: 12 },
+  xpCard: { backgroundColor: Palette.yellow },
+  streakCard: { backgroundColor: Palette.primarySoft },
+  statValue: { color: Palette.ink, fontSize: 31, fontWeight: '800' },
+  statLabel: { color: Palette.ink, fontSize: 12, fontWeight: '600', marginTop: 1, textAlign: 'center' },
+  progressCard: { marginTop: 12, padding: 17, borderRadius: 20, backgroundColor: Palette.white },
+  cardLabel: { color: Palette.ink, fontSize: 12, fontWeight: '700', marginBottom: 12 },
   progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   progressItem: { flex: 1, alignItems: 'center' },
-  progressNumber: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 27, fontWeight: '700' },
-  progressLabel: { color: Palette.ink, fontSize: 10, textAlign: 'center', marginTop: 2 },
-  verticalRule: { width: 1, height: 35, backgroundColor: 'rgba(37,37,37,0.25)' },
+  progressNumber: { color: Palette.ink, fontSize: 27, fontWeight: '800' },
+  progressLabel: { color: Palette.ink, fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 2 },
+  verticalRule: { width: 1, height: 35, backgroundColor: Palette.lightGreen },
   courseList: { gap: 10 },
-  courseNote: { borderWidth: 1.3, borderColor: Palette.ink, borderRadius: 15, padding: 14, paddingTop: 18, overflow: 'hidden' },
-  activeCourse: { backgroundColor: Palette.sage, transform: [{ rotate: '-0.3deg' }] },
-  otherCourse: { backgroundColor: Palette.paperAlt, transform: [{ rotate: '0.3deg' }] },
-  noteTape: { position: 'absolute', top: -2, left: '39%', width: 76, height: 14, backgroundColor: 'rgba(255,255,255,0.54)', transform: [{ rotate: '-3deg' }] },
-  courseName: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 23, fontWeight: '700' },
-  courseDetail: { color: Palette.muted, fontSize: 13, marginTop: 2 },
+  courseNote: { borderRadius: 20, padding: 15, paddingTop: 19, overflow: 'hidden' },
+  activeCourse: { backgroundColor: Palette.green },
+  otherCourse: { backgroundColor: Palette.white },
+  courseName: { color: Palette.ink, fontSize: 22, fontWeight: '800' },
+  courseDetail: { color: Palette.ink, fontSize: 13, marginTop: 4 },
   courseFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
-  courseLevel: { color: Palette.ink, fontSize: 11, textTransform: 'capitalize' },
-  activeLabel: { color: Palette.success, fontSize: 10, fontWeight: '800', letterSpacing: 1.1 },
-  tapHint: { color: Palette.muted, fontSize: 10, fontWeight: '600' },
-  emptyCourses: { color: Palette.muted, fontSize: 14, lineHeight: 21, marginBottom: 10 },
-  addButton: { minHeight: 52, marginTop: 12, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 15, backgroundColor: Palette.lavender, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '0.4deg' }] },
-  addButtonText: { color: Palette.ink, fontSize: 15, fontWeight: '700' },
-  logoutSection: { marginTop: 28, paddingTop: 18, borderTopWidth: 1, borderTopColor: Palette.line },
-  logoutHint: { color: Palette.muted, fontFamily: Fonts.handwritten, fontSize: 17, textAlign: 'center', marginBottom: 10 },
-  logoutButton: { minHeight: 52, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 15, backgroundColor: Palette.coral, alignItems: 'center', justifyContent: 'center' },
-  logoutText: { color: Palette.ink, fontSize: 15, fontWeight: '700' },
+  courseLevel: { color: Palette.ink, fontSize: 11, fontWeight: '600', textTransform: 'capitalize' },
+  activeLabel: { color: Palette.ink, fontSize: 10, fontWeight: '700', letterSpacing: 1.1 },
+  tapHint: { color: Palette.ink, fontSize: 10, fontWeight: '600' },
+  emptyCourses: { color: Palette.ink, fontSize: 14, lineHeight: 21, marginBottom: 10 },
+  addButton: { minHeight: 52, marginTop: 12, borderRadius: 18, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  addButtonText: { color: Palette.primary, fontSize: 15, fontWeight: '800' },
+  logoutSection: { marginTop: 28, paddingTop: 18, borderTopWidth: 1, borderTopColor: Palette.lightGreen },
+  logoutHint: { color: Palette.ink, fontSize: 15, fontWeight: '600', textAlign: 'center', marginBottom: 10 },
+  logoutButton: { minHeight: 52, borderRadius: 18, backgroundColor: Palette.lightGreen, alignItems: 'center', justifyContent: 'center' },
+  logoutText: { color: Palette.ink, fontSize: 15, fontWeight: '800' },
   disabled: { opacity: 0.6 },
-  errorText: { color: Palette.error, fontSize: 12, lineHeight: 17, marginTop: 8 },
-  modalRoot: { flex: 1, backgroundColor: Palette.paper, paddingTop: 55 },
+  errorText: { color: Palette.berryPink, fontSize: 12, lineHeight: 17, marginTop: 8 },
+  modalRoot: { flex: 1, backgroundColor: Palette.background, paddingTop: 55 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 8 },
-  modalTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 27, fontWeight: '700' },
-  closeButton: { paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: Palette.ink, borderRadius: 12, backgroundColor: Palette.paperAlt },
-  closeText: { color: Palette.ink, fontSize: 13, fontWeight: '600' },
+  modalTitle: { color: Palette.ink, fontSize: 26, fontWeight: '800' },
+  closeButton: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 15, backgroundColor: Palette.lightGreen },
+  closeText: { color: Palette.berryPink, fontSize: 13, fontWeight: '800' },
   confirmRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 22 },
-  confirmBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(37,37,37,0.48)' },
-  confirmCard: { width: '100%', maxWidth: 380, padding: 23, borderWidth: 1.6, borderColor: Palette.ink, borderRadius: 21, backgroundColor: Palette.paper, alignItems: 'center', transform: [{ rotate: '-0.4deg' }] },
-  confirmDoodle: { color: Journal.doodle, fontSize: 27, transform: [{ rotate: '12deg' }] },
-  confirmTitle: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 26, fontWeight: '700', textAlign: 'center', marginTop: 5 },
-  confirmCopy: { color: Palette.muted, fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 6 },
+  confirmBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(20,25,40,0.48)' },
+  confirmCard: { width: '100%', maxWidth: 380, padding: 23, borderRadius: 24, backgroundColor: Palette.white, alignItems: 'center' },
+  confirmTitle: { color: Palette.ink, fontSize: 24, fontWeight: '800', textAlign: 'center', marginTop: 5 },
+  confirmCopy: { color: Palette.ink, fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 6 },
   confirmActions: { flexDirection: 'row', width: '100%', gap: 10, marginTop: 21 },
-  noButton: { flex: 1, minHeight: 48, borderWidth: 1.3, borderColor: Palette.ink, borderRadius: 14, backgroundColor: Palette.paperAlt, alignItems: 'center', justifyContent: 'center' },
-  noText: { color: Palette.ink, fontSize: 14, fontWeight: '700' },
-  yesButton: { flex: 1, minHeight: 48, borderWidth: 1.3, borderColor: Palette.ink, borderRadius: 14, backgroundColor: Palette.yellow, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '0.7deg' }] },
-  yesText: { color: Palette.ink, fontSize: 14, fontWeight: '700' },
+  noButton: { flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: Palette.lightGreen, alignItems: 'center', justifyContent: 'center' },
+  noText: { color: Palette.charcoalBlack, fontSize: 14, fontWeight: '900' },
+  yesButton: { flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: Palette.primary, alignItems: 'center', justifyContent: 'center' },
+  yesText: { color: Palette.white, fontSize: 14, fontWeight: '800' },
 });

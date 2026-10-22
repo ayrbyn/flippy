@@ -13,7 +13,7 @@ import {
   LEVELS,
   TARGET_LANGUAGES,
 } from '../lib/languages';
-import { Fonts, Palette } from '../constants/theme';
+import { Palette } from '../constants/theme';
 
 const GOALS = [3, 5, 10];
 
@@ -157,79 +157,18 @@ export default function CreateCourseForm({
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: Palette.paper,
-  },
-  content: {
-    padding: 24,
-    paddingTop: 62,
-    paddingBottom: 48,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Palette.ink,
-    fontFamily: Fonts.handwritten,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: Palette.muted,
-    marginTop: 6,
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Palette.ink,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Palette.ink,
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: Palette.paperAlt,
-  },
-  chipSelected: {
-    backgroundColor: Palette.lavender,
-    borderColor: Palette.ink,
-  },
-  chipText: {
-    fontSize: 15,
-    color: Palette.ink,
-  },
-  chipTextSelected: {
-    color: Palette.ink,
-    fontWeight: '600',
-  },
-  error: {
-    color: Palette.error,
-    fontSize: 14,
-    marginTop: 16,
-  },
-  button: {
-    backgroundColor: Palette.yellow,
-    borderWidth: 1.5,
-    borderColor: Palette.ink,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: Palette.ink,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  scroll: { flex: 1, backgroundColor: Palette.background },
+  content: { padding: 24, paddingTop: 66, paddingBottom: 48 },
+  title: { fontSize: 30, lineHeight: 36, fontWeight: '800', color: Palette.ink },
+  subtitle: { fontSize: 15, lineHeight: 22, color: Palette.charcoalBlack, marginTop: 6, marginBottom: 24 },
+  label: { fontSize: 16, fontWeight: '900', color: Palette.charcoalBlack, marginTop: 12, marginBottom: 8 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { borderRadius: 16, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: Palette.white },
+  chipSelected: { backgroundColor: Palette.primarySoft },
+  chipText: { fontSize: 15, color: Palette.ink, fontWeight: '600' },
+  chipTextSelected: { color: Palette.ink, fontWeight: '800' },
+  error: { color: Palette.ink, fontSize: 14, marginTop: 16 },
+  button: { backgroundColor: Palette.primary, borderRadius: 17, paddingVertical: 14, alignItems: 'center', marginTop: 28 },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: Palette.white, fontSize: 16, fontWeight: '800' },
 });

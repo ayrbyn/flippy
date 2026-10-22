@@ -17,8 +17,10 @@ export const SESSION_SIZE = 10;
 
 export async function countPracticePool(courseId: string): Promise<PracticePoolCounts> {
   const [allResult, newResult] = await Promise.all([
-    supabase.from('user_words').select('id', { count: 'exact', head: true }).eq('course_id', courseId),
-    supabase.from('user_words').select('id', { count: 'exact', head: true }).eq('course_id', courseId).eq('practice_count', 0),
+    supabase.from('user_words').select('id', { count: 'exact', head: true })
+      .eq('course_id', courseId).not('saved_to_album_at', 'is', null),
+    supabase.from('user_words').select('id', { count: 'exact', head: true })
+      .eq('course_id', courseId).not('saved_to_album_at', 'is', null).eq('practice_count', 0),
   ]);
 
   if (allResult.error) throw new Error(allResult.error.message);
@@ -35,6 +37,7 @@ export async function fetchPracticeWords(courseId: string, scope: PracticeScope)
   for (let offset = 0; ; offset += pageSize) {
     let query = supabase
       .from('user_words').select('*').eq('course_id', courseId)
+      .not('saved_to_album_at', 'is', null)
       .order('created_at', { ascending: true }).order('id', { ascending: true })
       .range(offset, offset + pageSize - 1);
     if (scope === 'new_words') query = query.eq('practice_count', 0);
@@ -63,7 +66,8 @@ export async function countWordsAddedToday(courseId: string): Promise<number> {
   start.setHours(0, 0, 0, 0);
   const { count, error } = await supabase.from('user_words')
     .select('id', { count: 'exact', head: true })
-    .eq('course_id', courseId).gte('created_at', start.toISOString());
+    .eq('course_id', courseId).not('saved_to_album_at', 'is', null)
+    .gte('created_at', start.toISOString());
   if (error) throw new Error(error.message);
   return count ?? 0;
 }

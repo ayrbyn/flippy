@@ -149,11 +149,10 @@ export default function ReminderCard() {
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1.5,
-    borderColor: Palette.ink,
-    borderRadius: 16,
+    borderWidth: 0,
+    borderRadius: 22,
     padding: 16,
-    backgroundColor: Palette.coral,
+    backgroundColor: Palette.white,
     marginBottom: 16,
   },
   header: {
@@ -167,17 +166,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    color: Palette.muted,
+    color: Palette.royalBlue,
     marginBottom: 4,
   },
   status: {
     fontSize: 16,
     fontWeight: '600',
-    color: Palette.ink,
+    color: Palette.charcoalBlack,
   },
   subLabel: {
     fontSize: 13,
-    color: Palette.muted,
+    color: Palette.charcoalBlack,
     marginTop: 14,
     marginBottom: 8,
   },
@@ -187,33 +186,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: Palette.ink,
-    borderRadius: 16,
+    borderWidth: 0,
+    borderRadius: 15,
     paddingVertical: 6,
     paddingHorizontal: 14,
-    backgroundColor: Palette.paperAlt,
+    backgroundColor: Palette.white,
   },
   chipSelected: {
-    backgroundColor: Palette.yellow,
-    borderColor: Palette.ink,
+    backgroundColor: Palette.limeGreen,
   },
   chipText: {
     fontSize: 14,
-    color: Palette.ink,
+    color: Palette.charcoalBlack,
   },
   chipTextSelected: {
-    color: Palette.ink,
+    color: Palette.charcoalBlack,
     fontWeight: '600',
   },
   message: {
     fontSize: 13,
-    color: Palette.error,
+    color: Palette.royalBlue,
     marginTop: 12,
   },
   testLink: {
     fontSize: 14,
-    color: Palette.ink,
+    color: Palette.royalBlue,
     marginTop: 14,
   },
 });

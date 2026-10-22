@@ -7,10 +7,11 @@
     "beta": {
       "distribution": "internal",
       "channel": "beta",
+      "environment": "production",
       "android": {
         "buildType": "apk"
       },
-        "ios": {
+      "ios": {
         "simulator": false
       }
     },

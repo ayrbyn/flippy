@@ -4,13 +4,13 @@ import { Palette } from "@/constants/theme";
 export default function AppTabs() {
   return (
     <NativeTabs
-      backgroundColor={Palette.paperAlt}
-      indicatorColor={Palette.yellow}
+      backgroundColor={Palette.background}
+      indicatorColor={Palette.lightGreen}
       labelVisibilityMode="labeled"
-      rippleColor={Palette.lavender}
-      iconColor={{ default: Palette.muted, selected: Palette.ink }}
+      rippleColor={Palette.lightGreen}
+      iconColor={{ default: Palette.ink, selected: Palette.ink }}
       labelStyle={{
-        default: { color: Palette.muted, fontSize: 11 },
+        default: { color: Palette.ink, fontSize: 11 },
         selected: { color: Palette.ink, fontSize: 11, fontWeight: "700" },
       }}
     >

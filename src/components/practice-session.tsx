@@ -22,7 +22,7 @@ import {
   saveAnswer,
 } from '../lib/practice';
 import { useProfile } from '../lib/profile';
-import { Fonts, Journal, Palette } from '../constants/theme';
+import { Palette } from '../constants/theme';
 import { getLanguageName } from '../lib/languages';
 
 type Phase = 'loading' | 'error' | 'empty' | 'question' | 'feedback' | 'done';
@@ -230,7 +230,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
           <View>
             <Pressable onPress={() => setHint(true)} disabled={hint}>
               <Text style={styles.hintLink}>
-                {hint ? 'Petunjuk aktif · XP benar berkurang' : 'Lihat petunjuk'}
+                {hint ? 'Petunjuk aktif / XP benar berkurang' : 'Lihat petunjuk'}
               </Text>
             </Pressable>
             {hint ? (
@@ -281,7 +281,7 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
                 {current.word}: {current.definition}
               </Text>
               {lastCorrect && current.correct_count + (hint ? 0 : 1) >= 10 ? (
-                <Text style={styles.feedbackText}>Kata ini sudah masuk kategori hafal. ✨</Text>
+                <Text style={styles.feedbackText}>Kata ini sudah masuk kategori hafal.</Text>
               ) : null}
             </View>
 
@@ -296,158 +296,35 @@ export default function PracticeSession({ onExit, scope }: { onExit: () => void;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.paper,
-  },
-  content: {
-    padding: 24,
-    paddingTop: 72,
-    paddingBottom: 48,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: Palette.paper,
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  exit: {
-    fontSize: 16,
-    color: Palette.error,
-  },
-  progress: {
-    fontSize: 16,
-    color: Palette.muted,
-    fontWeight: '600',
-  },
-  instruction: {
-    fontSize: 14,
-    color: Palette.muted,
-    marginBottom: 12,
-  },
-  sentence: {
-    fontSize: 26,
-    lineHeight: 38,
-    color: Palette.ink,
-    fontFamily: Fonts.handwritten,
-    fontWeight: '600',
-  },
-  blank: {
-    color: Journal.link,
-  },
-  blankCorrect: {
-    color: Journal.correct,
-  },
-  blankWrong: {
-    color: Journal.incorrect,
-  },
-  translation: {
-    fontSize: 16,
-    color: Palette.muted,
-    fontStyle: 'italic',
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  hintLink: {
-    fontSize: 15,
-    color: Journal.link,
-    marginBottom: 6,
-  },
-  hintText: {
-    fontSize: 14,
-    color: Palette.ink,
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: Palette.ink,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 18,
-    color: Palette.ink,
-    backgroundColor: Palette.paperAlt,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: Palette.yellow,
-    borderWidth: 1.5,
-    borderColor: Palette.ink,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: Palette.ink,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  errorText: {
-    color: Journal.incorrect,
-    fontSize: 14,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  feedback: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-  },
-  feedbackOk: {
-    backgroundColor: Palette.sage,
-    borderColor: Palette.ink,
-  },
-  feedbackBad: {
-    backgroundColor: Palette.coral,
-    borderColor: Palette.ink,
-  },
-  feedbackTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Palette.ink,
-    marginBottom: 6,
-  },
-  feedbackText: {
-    fontSize: 15,
-    color: Palette.ink,
-    marginTop: 2,
-  },
-  doneTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Palette.ink,
-    fontFamily: Fonts.handwritten,
-    marginBottom: 12,
-  },
-  doneText: {
-    fontSize: 17,
-    color: Palette.ink,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  doneXp: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Journal.link,
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  meaningCard: { minHeight: 210, justifyContent: 'center', alignItems: 'center', padding: 24, borderWidth: 1.4, borderColor: Palette.ink, borderRadius: 20, backgroundColor: Palette.lavender, marginBottom: 14, transform: [{ rotate: '-0.4deg' }] },
-  promptLabel: { color: Palette.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.8, marginBottom: 13 },
-  meaningText: { color: Palette.ink, fontFamily: Fonts.handwritten, fontSize: 26, fontWeight: '700', textAlign: 'center', lineHeight: 34 },
-  promptHint: { color: Palette.muted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 15 },
+  container: { flex: 1, backgroundColor: Palette.background },
+  content: { padding: 24, paddingTop: 72, paddingBottom: 48 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: Palette.background },
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
+  exit: { fontSize: 16, color: Palette.berryPink, fontWeight: '700' },
+  progress: { fontSize: 16, color: Palette.aquaTeal, fontWeight: '800' },
+  instruction: { fontSize: 14, color: Palette.aquaTeal, fontWeight: '700', marginBottom: 12 },
+  sentence: { fontSize: 25, lineHeight: 36, color: Palette.charcoalBlack, fontWeight: '700' },
+  blank: { color: Palette.aquaTeal, fontWeight: '900' },
+  blankCorrect: { color: Palette.aquaTeal },
+  blankWrong: { color: Palette.berryPink },
+  translation: { fontSize: 16, color: Palette.muted, fontStyle: 'italic', marginTop: 12, marginBottom: 24 },
+  hintLink: { fontSize: 15, color: Palette.berryPink, fontWeight: '800', marginBottom: 6 },
+  hintText: { fontSize: 14, color: Palette.aquaTeal, marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: Palette.primaryBorder, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, fontSize: 18, color: Palette.ink, backgroundColor: Palette.white, marginTop: 8, marginBottom: 12 },
+  button: { backgroundColor: Palette.primary, borderRadius: 17, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', marginTop: 8 },
+  buttonDisabled: { opacity: 0.5 },
+  buttonText: { color: Palette.white, fontSize: 16, fontWeight: '800' },
+  errorText: { color: Palette.berryPink, fontSize: 14, marginBottom: 8, textAlign: 'center' },
+  feedback: { borderRadius: 18, padding: 16, marginBottom: 8, backgroundColor: Palette.white },
+  feedbackOk: { backgroundColor: Palette.lightGreen },
+  feedbackBad: { backgroundColor: Palette.lightGreen },
+  feedbackTitle: { fontSize: 18, fontWeight: '900', color: Palette.charcoalBlack, marginBottom: 6 },
+  feedbackText: { fontSize: 15, color: Palette.charcoalBlack, marginTop: 3 },
+  doneTitle: { fontSize: 28, fontWeight: '800', color: Palette.ink, marginBottom: 12 },
+  doneText: { fontSize: 17, color: Palette.charcoalBlack, textAlign: 'center', marginBottom: 4 },
+  doneXp: { fontSize: 24, fontWeight: '900', color: Palette.royalBlue, marginTop: 12, marginBottom: 24 },
+  meaningCard: { minHeight: 210, justifyContent: 'center', alignItems: 'center', padding: 24, borderRadius: 24, backgroundColor: Palette.primarySoft, marginBottom: 14 },
+  promptLabel: { color: Palette.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1.8, marginBottom: 13 },
+  meaningText: { color: Palette.ink, fontSize: 25, fontWeight: '800', textAlign: 'center', lineHeight: 34 },
+  promptHint: { color: Palette.secondary, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 15 },
 });

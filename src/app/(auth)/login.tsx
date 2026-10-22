@@ -9,7 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { Fonts, Palette } from '../../constants/theme';
+import { Palette } from '../../constants/theme';
 
 type Mode = 'login' | 'register';
 
@@ -129,68 +129,15 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: Palette.paper,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: Palette.ink,
-    fontFamily: Fonts.handwritten,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Palette.muted,
-    textAlign: 'center',
-    marginBottom: 32,
-    marginTop: 4,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: Palette.ink,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: Palette.ink,
-    backgroundColor: Palette.paperAlt,
-    marginBottom: 12,
-  },
-  message: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  error: {
-    color: Palette.error,
-  },
-  success: {
-    color: Palette.success,
-  },
-  button: {
-    backgroundColor: Palette.yellow,
-    borderWidth: 1.5,
-    borderColor: Palette.ink,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: Palette.ink,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  switchText: {
-    color: Palette.ink,
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 15,
-  },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: Palette.background },
+  title: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: Palette.ink, textAlign: 'center' },
+  subtitle: { fontSize: 16, lineHeight: 23, color: Palette.charcoalBlack, textAlign: 'center', marginBottom: 32, marginTop: 4 },
+  input: { borderWidth: 1, borderColor: Palette.lightGreen, borderRadius: 17, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, color: Palette.ink, backgroundColor: Palette.white, marginBottom: 12 },
+  message: { fontSize: 14, marginBottom: 12 },
+  error: { color: Palette.ink },
+  success: { color: Palette.ink },
+  button: { backgroundColor: Palette.primary, borderRadius: 17, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: Palette.white, fontSize: 16, fontWeight: '800' },
+  switchText: { color: Palette.royalBlue, textAlign: 'center', marginTop: 20, fontSize: 15, fontWeight: '800' },
 });

@@ -21,14 +21,30 @@ export type UserWord = {
   word_form_in_sentence_2?: string | null;
 };
 
+export type FlashcardPreview = Omit<
+  UserWord,
+  'id' | 'stage' | 'created_at' | 'saved_to_album_at'
+> & Partial<Pick<UserWord, 'id' | 'stage' | 'created_at' | 'saved_to_album_at'>>;
+
+const SINGLE_WORD_PATTERN = /^\p{L}[\p{L}\p{M}\p{N}]*(?:['-]\p{L}[\p{L}\p{M}\p{N}]*)*$/u;
+
+export function isSingleWord(value: string): boolean {
+  return SINGLE_WORD_PATTERN.test(value.normalize('NFC').trim());
+}
+
 export type GenerateResult =
-  | { ok: true; status: 'created' | 'cached' | 'exists'; flashcard: UserWord }
+  | { ok: true; status: 'created' | 'cached' | 'exists'; flashcard: FlashcardPreview }
   | { ok: false; code: string; message: string };
 
 const ERROR_MESSAGES: Record<string, string> = {
   ai_busy: 'Layanan AI sedang sibuk. Coba lagi beberapa saat lagi.',
   ai_failed: 'AI gagal membuat flashcard. Coba lagi.',
+  invalid_input: 'Masukkan satu kata saja, tanpa spasi atau kalimat.',
+  invalid_flashcard: 'Isi kartu belum lengkap. Buat ulang kartu ini lalu simpan kembali.',
   invalid_word: 'Kata tidak dikenali di bahasa ini. Periksa ejaannya.',
+  bad_request: 'Data flashcard tidak valid. Coba buat ulang.',
+  save_failed: 'Flashcard gagal disimpan. Coba lagi.',
+  server_error: 'Terjadi kesalahan di server. Coba lagi.',
   unauthorized: 'Sesi login habis. Silakan keluar lalu masuk lagi.',
 };
 
@@ -55,24 +71,20 @@ export async function fetchWords(courseId: string): Promise<UserWord[]> {
   return words;
 }
 
-export async function saveWordToAlbum(wordId: string): Promise<UserWord> {
-  const { data, error } = await supabase
-    .from('user_words')
-    .update({ saved_to_album_at: new Date().toISOString() })
-    .eq('id', wordId)
-    .select('*')
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data as UserWord;
-}
-
 export async function generateFlashcard(
   courseId: string,
   word: string
 ): Promise<GenerateResult> {
+  if (!isSingleWord(word)) {
+    return {
+      ok: false,
+      code: 'invalid_input',
+      message: ERROR_MESSAGES.invalid_input,
+    };
+  }
+
   const { data, error } = await supabase.functions.invoke('buat-flashcard', {
-    body: { course_id: courseId, word },
+    body: { action: 'generate', course_id: courseId, word: word.trim() },
   });
 
   if (error) {
@@ -98,6 +110,35 @@ export async function generateFlashcard(
   return {
     ok: true,
     status: data.status,
-    flashcard: data.flashcard as UserWord,
+    flashcard: data.flashcard as FlashcardPreview,
   };
+}
+
+export async function saveFlashcardToAlbum(
+  courseId: string,
+  flashcard: FlashcardPreview
+): Promise<UserWord> {
+  const { data, error } = await supabase.functions.invoke('buat-flashcard', {
+    body: { action: 'save', course_id: courseId, flashcard },
+  });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      let responseMessage: string | null = null;
+      try {
+        const body = await error.context.json();
+        const code = typeof body?.code === 'string' ? body.code : 'unknown';
+        responseMessage = code === 'bad_request'
+          ? 'Fungsi Supabase belum diperbarui. Deploy ulang buat-flashcard, lalu coba lagi.'
+          : ERROR_MESSAGES[code] ??
+            (typeof body?.error === 'string' ? body.error : 'Flashcard gagal disimpan.');
+      } catch {
+        // Fall through to the connection error below.
+      }
+      if (responseMessage) throw new Error(responseMessage);
+    }
+    throw new Error('Tidak bisa menyimpan flashcard. Periksa koneksi internet Anda.');
+  }
+
+  return data.flashcard as UserWord;
 }
